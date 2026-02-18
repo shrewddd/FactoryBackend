@@ -25,7 +25,7 @@ export const UserFromExternalSchema = ExternalUserSchema.transform((u): InsertUs
     email: null,
     phone: null,
     gender: "Other",
-    department: null,
+    departments: [],
     role: "Worker",
   }),
 );

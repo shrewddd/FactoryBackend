@@ -1,5 +1,4 @@
 import { query } from "db"
-import { buildSetClause, buildWhereClause } from "utils/models/clauseBuilders"
 import type { InsertUser, DatabaseUser, User, DatabaseUserWithAuth } from "schemas/users"
 
 export const createUser = async (data: InsertUser): Promise<DatabaseUser> => {
@@ -16,7 +15,7 @@ export const createUser = async (data: InsertUser): Promise<DatabaseUser> => {
     email,
     phone,
     gender,
-    department) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+    departments) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
     [ data.guid, 
       data.code, 
       data.taxCode, 
@@ -28,7 +27,7 @@ export const createUser = async (data: InsertUser): Promise<DatabaseUser> => {
       data.email, 
       data.phone, 
       data.gender, 
-      data.department
+      data.departments
     ])
 
   if (!result.rows.length) {
@@ -71,7 +70,7 @@ export const updateUserById = async (id: number, data: InsertUser): Promise<Data
     email = $10,
     phone = $11,
     gender = $12,
-    department = $13,
+    departments = $13,
     role = $14
     WHERE id = $1 RETURNING *`, 
     [
@@ -87,7 +86,7 @@ export const updateUserById = async (id: number, data: InsertUser): Promise<Data
       data.email,
       data.phone,
       data.gender,
-      data.department,
+      data.departments,
       data.role,
     ]);
   return result.rows[0];

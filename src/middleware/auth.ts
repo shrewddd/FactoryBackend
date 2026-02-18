@@ -1,5 +1,6 @@
 import express from 'express'
 import jwt, { type JwtPayload } from 'jsonwebtoken'
+import logger from 'logger';
 
 
 export const authenticate = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -16,7 +17,7 @@ export const authenticate = async (req: express.Request, res: express.Response, 
 
     next()
   } catch (error) {
-    console.log(error);
+    logger.error(error)
     res.sendStatus(401);
   }
 };

@@ -38,7 +38,7 @@ export const RegisterExternalUsers = async (): Promise<DatabaseUser[]> => {
     "email",
     "phone",
     "gender",
-    "department",
+    "departments",
   ];
 
   const values: any[] = [];
@@ -58,7 +58,7 @@ export const RegisterExternalUsers = async (): Promise<DatabaseUser[]> => {
       u.email,
       u.phone,
       u.gender,
-      u.department
+      u.departments
     );
 
     return `(${columns.map((_, j) => `$${offset + j + 1}`).join(",")})`;

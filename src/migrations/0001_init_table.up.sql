@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT DEFAULT NULL, 
   phone TEXT DEFAULT NULL, 
   gender gender NOT NULL DEFAULT 'Other', 
-  department TEXT DEFAULT NULL, 
+  departments TEXT[] DEFAULT '{}', 
   role role NOT NULL DEFAULT 'Worker'
 ); 
 

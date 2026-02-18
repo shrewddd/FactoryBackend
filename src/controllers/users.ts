@@ -1,14 +1,22 @@
 import express from "express";
 import { InsertUserSchema, UserFromDatabase, UsersFromDatabase, type DatabaseUser, type User } from "schemas/users";
 import { paramsSchema } from "schemas/utils";
-import { getUsers, updateUserById } from "services/users";
+import { getUserById, getUsers, updateUserById } from "services/users";
 import { asyncHandler, HttpError } from "utils/errorHandler";
+
 
 export const getUsersController = asyncHandler(async (req: express.Request, res: express.Response ) => {
   const databaseUsers: DatabaseUser[] = await getUsers();
   const users: User[] = UsersFromDatabase.parse(databaseUsers)
   res.status(200).json(users);
 });
+
+export const getUserController = asyncHandler(async (req: express.Request, res:express.Response) => {
+  const { id } = paramsSchema.parse(req.params)
+  const data = await getUserById(id)
+  const user = UserFromDatabase.parse(data)
+  res.status(200).json(user);
+})
 
 export const updateUserController = asyncHandler(async (req: express.Request, res: express.Response) => {
   const { id } = paramsSchema.parse(req.params) 

@@ -44,7 +44,7 @@ export const AddProductsToDB = async (): Promise<ExternalProduct[]> => {
   try {
     parsedProducts = ProductsFromExternalSchema.parse(products);
   } catch (error) {
-    console.log(error);
+    console.error(error)
     throw error;
   }
 
@@ -67,7 +67,7 @@ export const AddProductsToDB = async (): Promise<ExternalProduct[]> => {
   const values: any[] = [];
   const placeholders = uniqueProducts.map((p: ExternalProduct, i: number) => {
     const offset = i * columns.length;
-    values.push(p.code, null, p.name, true, null);
+    values.push(p.code, null, p.name, false, null);
     return `(${columns
       .map((_, j) => `$${offset + j + 1}`)
       .join(",")})`;
@@ -80,7 +80,6 @@ export const AddProductsToDB = async (): Promise<ExternalProduct[]> => {
   `;
   
   const result = await query(sql, values);
-  console.log(result.rows);
   
   return result.rows;
 };

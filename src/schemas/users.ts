@@ -18,7 +18,7 @@ const shared = {
   email: z.email().nullish(),
   phone: z.string().nullish(),
   gender: genderEnum.nullish().default("Other"),
-  department: z.string().nullish(),
+  departments: z.string().array().nullish().default([]),
   role: roleEnum.nullish(),
 }
 
