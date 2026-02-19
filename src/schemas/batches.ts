@@ -4,11 +4,16 @@ import { DatabaseProductSchema, ProductSchema } from "./products";
 
 const progressEnum = z.enum([
   'Inactive', 
-  'Knitting Workshop',
-  'Sewing Workshop',
-  'Molding Workshop',
-  'Labeling Workshop', 
-  'Packaging Workshop', 
+  'Knitting Workshop (In-Progress)',
+  'Knitting Workshop (Finished)',
+  'Sewing Workshop (In-Progress)',
+  'Sewing Workshop (Finished)',
+  'Molding Workshop (In-Progress)',
+  'Molding Workshop (Finished)',
+  'Labeling Workshop (In-Progress)',
+  'Labeling Workshop (Finished)',
+  'Packaging Workshop (In-Progress)',
+  'Packaging Workshop (Finished)',
   'Completed'
 ])
 

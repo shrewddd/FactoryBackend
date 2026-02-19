@@ -1,13 +1,18 @@
 CREATE TYPE gender as ENUM ('Male', 'Female', 'Other'); 
 CREATE TYPE role as ENUM ('Superuser', 'Master', 'Manager', 'Worker', 'Observer'); 
 CREATE TYPE batch_progress as ENUM (
-'Inactive', 
-'Knitting Workshop',
-'Sewing Workshop',
-'Molding Workshop',
-'Labeling Workshop', 
-'Packaging Workshop', 
-'Completed'
+  'Inactive', 
+  'Knitting Workshop (In-Progress)',
+  'Knitting Workshop (Finished)',
+  'Sewing Workshop (In-Progress)',
+  'Sewing Workshop (Finished)',
+  'Molding Workshop (In-Progress)',
+  'Molding Workshop (Finished)',
+  'Labeling Workshop (In-Progress)',
+  'Labeling Workshop (Finished)',
+  'Packaging Workshop (In-Progress)',
+  'Packaging Workshop (Finished)',
+  'Completed'
 ); 
 
 CREATE TABLE IF NOT EXISTS users (
@@ -122,13 +127,18 @@ BEGIN
   END IF;
 
   new_status := CASE current_status
-    WHEN 'Inactive'           THEN 'Knitting Workshop'
-    WHEN 'Knitting Workshop'  THEN 'Sewing Workshop'
-    WHEN 'Sewing Workshop'    THEN 'Molding Workshop'
-    WHEN 'Molding Workshop'   THEN 'Labeling Workshop'
-    WHEN 'Labeling Workshop'  THEN 'Packaging Workshop'
-    WHEN 'Packaging Workshop' THEN 'Completed'
-    ELSE current_status
+    WHEN 'Inactive'                       THEN 'Knitting Workshop (In-Progress)'
+    WHEN 'Knitting Workshop (In-Progress)'  THEN 'Knitting Workshop (Finished)'
+    WHEN 'Knitting Workshop (Finished)'     THEN 'Sewing Workshop (In-Progress)'
+    WHEN 'Sewing Workshop (In-Progress)'    THEN 'Sewing Workshop (Finished)'
+    WHEN 'Sewing Workshop (Finished)'       THEN 'Molding Workshop (In-Progress)'
+    WHEN 'Molding Workshop (In-Progress)'   THEN 'Molding Workshop (Finished)'
+    WHEN 'Molding Workshop (Finished)'      THEN 'Labeling Workshop (In-Progress)'
+    WHEN 'Labeling Workshop (In-Progress)'  THEN 'Labeling Workshop (Finished)'
+    WHEN 'Labeling Workshop (Finished)'     THEN 'Packaging Workshop (In-Progress)'
+    WHEN 'Packaging Workshop (In-Progress)' THEN 'Packaging Workshop (Finished)'
+    WHEN 'Packaging Workshop (Finished)'    THEN 'Completed'
+    ELSE current_status 
   END;
 
   RETURN QUERY
