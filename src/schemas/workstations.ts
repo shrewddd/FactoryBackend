@@ -13,14 +13,14 @@ const mapped = {
 
 export const WorkstationSchema = z.object({ ...shared, ...mapped });
 
-export const DatabaseWorkstationSchema = z.object({
+export const WorkstationRowSchema = z.object({
   ...shared,
   qr_code_id: mapped.qrCodeId,
   is_active: mapped.isActive,
 });
 
-export const WokrstationFromDatabase = DatabaseWorkstationSchema.transform((db) => {
-  const { qr_code_id, is_active, ...rest } = db;
+export const WorkstationFromRow = WorkstationRowSchema.transform((row) => {
+  const { qr_code_id, is_active, ...rest } = row;
   return {
     ...rest,
     qrCodeId: qr_code_id,
@@ -28,20 +28,8 @@ export const WokrstationFromDatabase = DatabaseWorkstationSchema.transform((db) 
   };
 });
 
-export const DatabaseFromWorkstation = WorkstationSchema.transform((workstation) => {
-  const { qrCodeId, isActive, ...rest } = workstation;
-  return {
-    ...rest,
-    qr_code_id: qrCodeId,
-    is_active: isActive,
-  };
-});
-
-export const InsertWorkstationSchema = WorkstationSchema.omit({ id: true });
-
-export const WorkstationsFromDatabase = WokrstationFromDatabase.array();
-export const DatabaseFromWorkstations = DatabaseFromWorkstation.array();
+export const WorkstationInsertSchema = WorkstationSchema.omit({ id: true }).partial({ isActive: true });
 
 export type Workstation = z.infer<typeof WorkstationSchema>;
-export type DatabaseWorkstation = z.infer<typeof DatabaseWorkstationSchema>;
-export type InsertWorkstation = z.infer<typeof InsertWorkstationSchema>;
+export type WorkstationRow = z.infer<typeof WorkstationRowSchema>;
+export type WorkstationInsert = z.infer<typeof WorkstationInsertSchema>;
