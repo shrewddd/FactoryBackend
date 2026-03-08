@@ -14,13 +14,13 @@ const mapped = {
 
 export const ProductSchema = z.object({ ...shared, ...mapped });
 
-export const DatabaseProductSchema = z.object({
+export const ProductRowSchema = z.object({
   ...shared,
   measure_unit_id: mapped.measureUnitId,
   is_active: mapped.isActive,
 });
 
-export const ProductFromDatabase = DatabaseProductSchema.transform((db) => {
+export const ProductFromRow = ProductRowSchema.transform((db) => {
   const { is_active, measure_unit_id, ...rest } = db;
   return {
     ...rest,
@@ -29,20 +29,8 @@ export const ProductFromDatabase = DatabaseProductSchema.transform((db) => {
   };
 });
 
-export const DatabaseFromProduct = ProductSchema.transform((product) => {
-  const { isActive, measureUnitId, ...rest } = product;
-  return {
-    ...rest,
-    measure_unit_id: product.measureUnitId,
-    is_active: product.isActive,
-  };
-});
-
-export const InsertProductSchema = ProductSchema.omit({ id: true });
-
-export const ProductsFromDatabase = ProductFromDatabase.array();
-export const DatabaseFromProducts = DatabaseFromProduct.array();
+export const ProductInsertSchema = ProductSchema.omit({ id: true });
 
 export type Product = z.infer<typeof ProductSchema>;
-export type DatabaseProduct = z.infer<typeof DatabaseProductSchema>;
-export type InsertProduct = z.infer<typeof InsertProductSchema>;
+export type ProductRow = z.infer<typeof ProductRowSchema>;
+export type ProductInsert = z.infer<typeof ProductInsertSchema>;
