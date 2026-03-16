@@ -1,12 +1,14 @@
+import { AuthenticationController } from 'controllers_new/auth';
 import express from 'express'
-import { login, logout, register, whoami } from 'controllers/authentication';
 import { authenticate } from 'middleware/auth';
 
 const router = express.Router();
 
-router.post('/register', register);
-router.post('/login', login);
-router.post('/logout', authenticate, logout);
-router.get('/whoami', authenticate, whoami)
+const controller = new AuthenticationController()
+
+router.post('/register', controller.register);
+router.post('/login', controller.login);
+router.post('/logout', authenticate, controller.logout);
+router.get('/whoami', authenticate, controller.whoami)
 
 export default router;

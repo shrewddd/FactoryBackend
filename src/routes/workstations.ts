@@ -1,13 +1,15 @@
 import express from "express"
-import { createWorkstationController, deleteWorkstationController, getAllWorkstationsController, getWorkstationController, updateWorkstationController } from "controllers/workstations";
 import { authenticate } from "middleware/auth";
+import { WorkstationController } from "controllers_new/workstations";
 
 const router = express.Router()
 
-router.get("/", authenticate, getAllWorkstationsController)
-router.get("/:id", getWorkstationController)
-router.post("/", authenticate, createWorkstationController)
-router.put("/:id", authenticate, updateWorkstationController)
-router.delete("/:id", authenticate, deleteWorkstationController)
+const controller = new WorkstationController()
+
+router.get("/", authenticate, controller.findMany)
+router.get("/:id", controller.find)
+// router.post("/", authenticate, controller.create) WIP
+// router.put("/:id", authenticate, controller.update) WIP
+// router.delete("/:id", authenticate, controller.delete) WIP
 
 export default router;

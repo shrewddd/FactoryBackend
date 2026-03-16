@@ -1,13 +1,15 @@
+import { ProductController } from 'controllers_new/products';
 import express from 'express'
-import { createProductController, deleteProductController, getProductController, getProductsController, updateProductController } from 'controllers/products';
 import { authenticate } from 'middleware/auth';
 
 const router = express.Router();
 
-router.get('/', authenticate, getProductsController);
-router.get('/:id', getProductController)
-router.post('/', authenticate, createProductController)
-router.put('/:id', authenticate, updateProductController)
-router.delete('/:id', authenticate, deleteProductController)
+const controller = new ProductController()
+
+router.get('/', authenticate, controller.findMany)
+router.get('/:id', controller.find)
+// router.post('/', authenticate, controller.create) WIP
+router.put('/:id', authenticate, controller.update)
+// router.delete('/:id', authenticate, controller.delete) WIP
 
 export default router;

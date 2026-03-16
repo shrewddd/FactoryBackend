@@ -1,16 +1,18 @@
-import { activateQRCodeController, createQRCodesController, getQRCodesController, getQRCodeController, scanQRCodeController, updateQRCodeController, createQRCodeController, deleteQRCodeController } from "controllers/qrcodes";
+import { QRCodeController } from "controllers_new/qrcodes";
 import express from "express"
 import { authenticate } from "middleware/auth";
 
 const router = express.Router()
 
-router.get('/', authenticate, getQRCodesController)
-router.get('/:id', getQRCodeController)
-router.post('/', authenticate, createQRCodeController)
-router.post('/bulk', authenticate, createQRCodesController)
-router.put('/:id', authenticate, updateQRCodeController)
-router.delete('/:id', authenticate, deleteQRCodeController)
-router.patch('/:id/activate', authenticate, activateQRCodeController)
-router.get('/:id/scan', scanQRCodeController)
+const controller = new QRCodeController();
+
+router.get('/', authenticate, controller.findMany)
+router.get('/:id', controller.find)
+router.post('/', authenticate, controller.create)
+router.post('/bulk', authenticate, controller.createMany)
+// router.put('/:id', authenticate, controller.update) WIP
+// router.delete('/:id', authenticate, controller.delete) WIP
+router.patch('/:id/link', authenticate, controller.link)
+router.get('/:id/scan', controller.scan)
 
 export default router;
