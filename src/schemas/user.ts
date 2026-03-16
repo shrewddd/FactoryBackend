@@ -19,7 +19,7 @@ const shared = {
 const mapped = {
   firstName: z.string(),
   lastName: z.string(),
-  fullName: z.string(),
+  fullName: z.string().nullish(),
   role: z.object({
     id: RoleSchema.shape.id,
     label: RoleSchema.shape.label.nullish(),
@@ -81,8 +81,9 @@ export const UserFromRow = UserRowSchema.transform((row) => {
 
 export const UserInsertSchema = UserSchema
   .omit({ id: true, fullName: true, role: true, departments: true })
-  .partial({ gender: true, isActive: true })
+  .partial({ isActive: true, patronymic: true })
   .extend({
+    gender: genderEnum.default("Other"),
     roleId: RoleSchema.shape.id.nullish(),
     departmentIds: DbId.array().nullish().default([])
   });

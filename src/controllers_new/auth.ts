@@ -31,7 +31,7 @@ export class AuthenticationController {
 
   whoami = asyncHandler(async (req: express.Request, res: express.Response) => {
     if (!req.userId) throw new HttpError(401, `Invalid data, you must provide userId`);
-    const result = this.authService.whoami(req.userId);
+    const result = await this.authService.whoami(req.userId);
     res.status(200).json(result);
   });
 }

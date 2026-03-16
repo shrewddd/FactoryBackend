@@ -38,7 +38,7 @@ export class AuthenticationService {
 
     await this.authRepository.create(authObject);
 
-    return UserFromRow.parse(addedUser);
+    return addedUser;
   }
 
   async login(data: UserLogin) {

@@ -1,10 +1,9 @@
-
 import { query } from "db";
 import { type Authentication, AuthenticationFromRow, type AuthenticationInsert, type AuthenticationRow } from "schemas/authentication";
 
 export class AuthenticationRepository {
   async find(id: number): Promise<Authentication> {
-    const result = await query<AuthenticationRow>(`SELECT * FROM authentication WHERE id = $1 LIMIT 1`, [id]);
+    const result = await query<AuthenticationRow>(`SELECT * FROM authentication WHERE user_id = $1 LIMIT 1`, [id]);
     const rows = result.rows;
     return AuthenticationFromRow.parse(rows[0]);
   }
@@ -22,7 +21,7 @@ export class AuthenticationRepository {
   }
 
   async delete(id: number): Promise<Authentication> {
-    const result = await query<AuthenticationRow>(`DELETE FROM authentication WHERE id = $1 RETURNING *`, [id]);
+    const result = await query<AuthenticationRow>(`DELETE FROM authentication WHERE user_id = $1 RETURNING *`, [id]);
     const rows = result.rows;
     return AuthenticationFromRow.parse(rows[0]);
   }

@@ -9,11 +9,13 @@ export class UserRepository {
     return UserFromRow.array().parse(rows);
   }
 
-  async find(by: UserLookup): Promise<User> {
+  async find(by: UserLookup): Promise<User | null> {
     const [field, value] = Object.entries(by)[0] ?? [];
     if (!field || value === undefined) throw new Error('Invalid lookup');
     const result = await query<UserRow>(`SELECT * FROM users WHERE ${field} = $1 LIMIT 1`, [value]);
-    return UserFromRow.parse(result.rows);
+    const rows = result.rows;
+    if (!rows[0]) return null;
+    return UserFromRow.parse(rows[0]);
   }
 
   async create(data: UserInsert): Promise<User> {
@@ -28,7 +30,7 @@ export class UserRepository {
         email,
         phone,
         gender,
-        role_id
+        role_id,
         is_active
         ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
         RETURNING *`,
@@ -66,7 +68,7 @@ export class UserRepository {
     ]);
     const result = await query<UserRow>(
       `INSERT INTO users (code, username, first_name, last_name, patronymic, date_of_birth, email, phone, gender, role_id, is_active) VALUES ${placeholders}`,
-      [values],
+      values
     );
     const rows = result.rows;
     return UserFromRow.array().parse(rows);
@@ -85,7 +87,7 @@ export class UserRepository {
       phone = $9,
       gender = $10,
       role_id = $11,
-      is_active = $12,
+      is_active = $12
       WHERE id = $1 RETURNING *
     `,
       [
@@ -105,7 +107,7 @@ export class UserRepository {
     );
     if (data.departmentIds?.length) this.updateDepartments(id, data.departmentIds);
     const rows = result.rows;
-    return UserFromRow.parse(rows);
+    return UserFromRow.parse(rows[0]);
   }
 
   private async updateDepartments(userId: number, departmentIds: number[]): Promise<void> {
