@@ -1,23 +1,21 @@
 import { z } from "zod"; 
-import { DbId, Timestamps } from "./utils";
-import { DatabaseProductSchema, ProductSchema } from "./products";
+import { DbId } from "./utils";
+import { ProductSchema } from "./products";
+import { WorkstationSchema } from "./workstations";
+import { BatchStatusSchema } from "./batchStatuses";
+import { DepartmentSchema } from "./departments";
+import { UserSchema } from "./user";
 
-const progressEnum = z.enum([
-  'Inactive', 
-  'Knitting Workshop (In-Progress)',
-  'Knitting Workshop (Finished)',
-  'Sewing Workshop (In-Progress)',
-  'Sewing Workshop (Finished)',
-  'Turning Workshop (In-Progress)',
-  'Turning Workshop (Finished)',
-  'Molding Workshop (In-Progress)',
-  'Molding Workshop (Finished)',
-  'Labeling Workshop (In-Progress)',
-  'Labeling Workshop (Finished)',
-  'Packaging Workshop (In-Progress)',
-  'Packaging Workshop (Finished)',
-  'Completed'
-])
+export const BatchWorkerSchema = z.object({
+  department: z.object({
+    id: DepartmentSchema.shape.id,
+    label: DepartmentSchema.shape.label.nullish(),
+  }),
+  worker: z.object({
+    id: UserSchema.shape.id,
+    fullName: UserSchema.shape.fullName.nullish(),
+  }),
+});
 
 const shared = {
   id: DbId,
@@ -26,128 +24,86 @@ const shared = {
 }
 
 const mapped = {
-  productId: DbId.nullish(),
-  workstationId: DbId.nullish(),
-  progressStatus: progressEnum,
   actualSize: z.int().positive().nullish(),
-  masters: z.object({
-    knitting: DbId.nullish(),
-    sewing: DbId.nullish(),
-    turning: DbId.nullish(),
-    molding: DbId.nullish(),
-    labeling: DbId.nullish(),
-    packaging: DbId.nullish(),
+  product: z.object({
+    id: ProductSchema.shape.id.nullish(),
+    name: ProductSchema.shape.name.nullish(),
+    measureUnitId: ProductSchema.shape.measureUnitId.nullish(),
   }),
-  isPlanned: z.boolean().nullish().default(false),
-  plannedFor: z.coerce.date().default(() => new Date()),
- ...Timestamps
+  workstation: z.object({
+    id: WorkstationSchema.shape.id.nullish(),
+    name: WorkstationSchema.shape.name.nullish(),
+  }),
+  status: z.object({
+    id: BatchStatusSchema.shape.id,
+    label: BatchStatusSchema.shape.label.nullish(),
+    sortOrder: BatchStatusSchema.shape.sortOrder.nullish(),
+    isTerminal: BatchStatusSchema.shape.isTerminal.nullish(),
+    allowsDefectReporting: BatchStatusSchema.shape.allowsDefectReporting.nullish(),
+    isActive: BatchStatusSchema.shape.isActive.nullish(),
+  }),
+  workers: BatchWorkerSchema.array().nullish(),
+  plannedFor: z.coerce.date().optional().default(() => new Date()),
+  isActive: z.boolean().optional().default(true)
 }
 
-export const BatchSchema = z.object({ 
-  ...mapped,
-  ...shared,
-}); 
+export const BatchSchema = z.object({ ...mapped, ...shared }); 
 
-export const BatchWithProductSchema = BatchSchema.extend({
-  product: {...ProductSchema.omit({ id: true })}
-})
-
-export const DatabaseBatchSchema = z.object({
+export const BatchRowSchema = z.object({
   ...shared,
-  product_id: mapped.productId,
   actual_size: mapped.actualSize,
-  knitting_worker_id: mapped.masters.shape.knitting,
-  sewing_worker_id: mapped.masters.shape.sewing,
-  turning_worker_id: mapped.masters.shape.turning,
-  molding_worker_id: mapped.masters.shape.molding,
-  labeling_worker_id: mapped.masters.shape.labeling,
-  packaging_worker_id: mapped.masters.shape.packaging,
-  workstation_id: mapped.workstationId,
-  progress_status: mapped.progressStatus,
-  is_planned: mapped.isPlanned,
+  product_id: mapped.product.shape.id,
+  product_name: mapped.product.shape.name,
+  product_measure_unit_id: mapped.product.shape.measureUnitId,
+  workstation_id: mapped.workstation.shape.id,
+  workstation_name: mapped.workstation.shape.name,
+  status_id: mapped.status.shape.id,
+  status_label: mapped.status.shape.label,
+  status_sort_order: mapped.status.shape.sortOrder,
+  status_is_terminal: mapped.status.shape.isTerminal,
+  status_allows_defect_reporting: mapped.status.shape.allowsDefectReporting,
+  status_is_active: mapped.status.shape.isActive,
+  workers: BatchWorkerSchema.array().nullish().default([]),
   planned_for: mapped.plannedFor,
-  updated_at: mapped.updatedAt,
-  created_at: mapped.createdAt,
+  is_active: mapped.isActive,
 })
 
-export const DatabaseBatchWithProductSchema = DatabaseBatchSchema.extend({
-  product: {...DatabaseProductSchema.omit({ id: true })}
+export const BatchInsertSchama = BatchSchema
+.omit({ id: true, product: true, workstation: true, status: true })
+.partial({ size: true, actualSize: true })
+.extend({
+  productId: DbId.nullish(),
+  workstationId: DbId.nullish(),
+  statusId: DbId.nullish().default(1)
 })
 
-export const BatchFromDatabase = DatabaseBatchSchema.transform((db) => ({
-  id: db.id,
-  name: db.name,
-  size: db.size,
-  productId: db.product_id,
-  actualSize: db.actual_size,
-  masters: {
-    knitting: db.knitting_worker_id,
-    sewing: db.sewing_worker_id,
-    turning: db.turning_worker_id,
-    molding: db.molding_worker_id,
-    labeling: db.labeling_worker_id,
-    packaging: db.packaging_worker_id,
+export const BatchFromRow = BatchRowSchema.transform((row): Batch => ({
+  id: row.id,
+  name: row.name,
+  size: row.size,
+  actualSize: row.actual_size,
+  product: {
+    id: row.product_id,
+    name: row.product_name,
+    measureUnitId: row.product_measure_unit_id,
   },
-  workstationId: db.workstation_id,
-  progressStatus: db.progress_status,
-  isPlanned: db.is_planned,
-  plannedFor: db.planned_for,
-  updatedAt: db.updated_at,
-  createdAt: db.created_at,
+  workstation: {
+    id: row.workstation_id,
+    name: row.workstation_name,
+  },
+  status: {
+    id: row.status_id,
+    label: row.status_label,
+    sortOrder: row.status_sort_order,
+    isTerminal: row.status_is_terminal,
+    allowsDefectReporting: row.status_allows_defect_reporting,
+    isActive: row.status_is_active,
+  },
+  workers: row.workers,
+  plannedFor: row.planned_for,
+  isActive: row.is_active,
 }))
-
-export const BatchWithProductFromDatabase = DatabaseBatchWithProductSchema.transform((db) => {
-  const batch = BatchFromDatabase.parse(db)
-  return {
-    ...batch,
-    product: {
-      code: db.product.code,
-      category: db.product.category,
-      name: db.product.name,
-      isActive: db.product.is_active,
-      measureUnit: db.product.measure_unit,
-    }
-  }
-})
-
-export const DatabaseFromBatch = BatchSchema.transform((batch) => ({
-  id: batch.id,
-  name: batch.name,
-  product_id: batch.productId,
-  size: batch.size,
-  actual_size: batch.actualSize,
-  knitting_worker_id: batch.masters.knitting,
-  sewing_worker_id: batch.masters.sewing,
-  turning_worker_id: batch.masters.turning,
-  molding_worker_id: batch.masters.molding,
-  labeling_worker_id: batch.masters.labeling,
-  packaging_worker_id: batch.masters.packaging,
-  workstation_id: batch.workstationId,
-  progress_status: batch.progressStatus,
-  is_planned: batch.isPlanned,
-  planned_for: batch.plannedFor,
-  updated_at: batch.updatedAt,
-  created_at: batch.createdAt,
-}))
-
-export const DatabaseFromBatches = DatabaseFromBatch.array();
-export const BatchesFromDatabase = BatchFromDatabase.array();
-export const BatchesWithProductFromDatabase = BatchWithProductFromDatabase.array();
-
-export const InsertBatchSchema = BatchSchema.omit({ 
-  id: true, 
-  progressStatus: true, 
-  updatedAt: true, 
-  createdAt: true, 
-}); 
-
-export const InitializeBatchSchema = InsertBatchSchema
-  .extend({amount: z.int(),})
-  .transform(({ amount, ...batch }) => ({ batch, amount }));
 
 export type Batch = z.infer<typeof BatchSchema>; 
-export type BatchWithProduct = z.infer<typeof BatchWithProductSchema>;
-export type DatabaseBatch = z.infer<typeof DatabaseBatchSchema>;
-export type DatabaseBatchWithProduct = z.infer<typeof DatabaseBatchWithProductSchema>;
-export type InsertBatch = z.infer<typeof InsertBatchSchema>;
-export type InitializeBatch = z.infer<typeof InitializeBatchSchema>;
+export type BatchRow = z.infer<typeof BatchRowSchema>
+export type BatchInsert = z.infer<typeof BatchInsertSchama>

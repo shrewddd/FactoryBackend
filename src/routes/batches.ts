@@ -1,18 +1,18 @@
-import { getBatchesController, getBatchController, scanBatchController, initializePlannedBatchesController, updateBatchController, deleteBatchController, createBatchController, executePlannedBatchesController, createBatchesController, persistSpoilageController } from "controllers/batches";
+import { BatchController } from "controllers_new/batches";
 import express from "express";
 import { authenticate } from "middleware/auth";
 
 const router = express.Router();
 
-router.get('/', authenticate, getBatchesController)
-router.get('/:id', getBatchController)
-router.post('/', authenticate, createBatchController)
-router.post('/bulk', authenticate, createBatchesController)
-router.put('/:id', authenticate, updateBatchController)
-router.delete('/:id', authenticate, deleteBatchController)
-router.patch('/:id/scan', authenticate, scanBatchController)
-router.post('/planned', authenticate, initializePlannedBatchesController)
-router.patch('/planned/execute', authenticate, executePlannedBatchesController)
-router.patch('/:id/spoilage', persistSpoilageController)
+const controller = new BatchController()
+
+router.get('/', authenticate, controller.findMany)
+router.get('/:id', controller.find)
+router.post('/', authenticate, controller.create)
+// router.post('/bulk', authenticate, createBatchesController)
+router.put('/:id', authenticate, controller.update)
+router.delete('/:id', authenticate, controller.delete)
+router.patch('/:id/advance', authenticate, controller.advance)
+// router.patch('/:id/spoilage', persistSpoilageController)
 
 export default router;

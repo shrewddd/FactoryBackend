@@ -1,5 +1,7 @@
 CREATE TYPE gender as ENUM ('Male', 'Female', 'Other'); 
 
+CREATE TYPE defect_category AS ENUM ('second_grade', 'spoilage');
+
 CREATE TABLE roles (
   id SERIAL PRIMARY KEY,
   label TEXT UNIQUE NOT NULL,
@@ -27,7 +29,7 @@ CREATE TABLE IF NOT EXISTS users (
   date_of_birth DATE DEFAULT NULL, 
   email TEXT DEFAULT NULL, 
   phone TEXT DEFAULT NULL, 
-  gender gender NOT NULL DEFAULT 'Other', 
+  gender gender DEFAULT 'Other', 
   role_id INT REFERENCES roles(id) ON DELETE RESTRICT, 
   is_active BOOLEAN NOT NULL DEFAULT TRUE
 ); 
@@ -122,15 +124,17 @@ CREATE TABLE batch_transitions (
 CREATE TABLE batch_workers (
   id SERIAL PRIMARY KEY,
   batch_id INT NOT NULL REFERENCES batches(id) ON DELETE CASCADE,
-  status_id INT NOT NULL REFERENCES batch_statuses(id),
+  department_id INT NOT NULL REFERENCES departments(id) ON DELETE RESTRICT,
   worker_id INT NOT NULL REFERENCES users(id),
-  UNIQUE (batch_id, status_id)
+  UNIQUE (batch_id, department_id)
 );
 
 CREATE TABLE defect_types (
   id SERIAL PRIMARY KEY,
   label TEXT NOT NULL,
-  is_active BOOLEAN DEFAULT FALSE
+  category defect_category NOT NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  is_active BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE defects (
@@ -186,11 +190,17 @@ BEFORE UPDATE ON batches
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at();
  
-CREATE OR REPLACE FUNCTION scan_batch(p_batch_id INT, p_actor_id INT)
+CREATE OR REPLACE FUNCTION advance_batch(
+  p_batch_id      INT,
+  p_actor_id      INT,
+  p_defects       JSONB DEFAULT '[]',
+  p_size_override INT  DEFAULT NULL
+)
 RETURNS batches AS $$
 DECLARE
   v_next_status_id INT;
   v_prev_status_id INT;
+  v_total_defects  INT;
   v_result         batches;
 BEGIN
   SELECT st.to_status_id, b.status_id
@@ -211,23 +221,47 @@ BEGIN
       ))
       OR (st.required_role_id IS NOT NULL AND u.role_id = st.required_role_id)
     );
- 
+
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Scan rejected for batch % by user %', p_batch_id, p_actor_id;
+    RAISE EXCEPTION 'Advance rejected for batch % by user %', p_batch_id, p_actor_id;
   END IF;
- 
+
+  IF p_size_override IS NOT NULL THEN
+    UPDATE batches SET actual_size = p_size_override WHERE id = p_batch_id;
+  END IF;
+
+  SELECT COALESCE(SUM((item->>'quantity')::INT), 0)
+  INTO v_total_defects
+  FROM jsonb_array_elements(p_defects) AS item;
+
+  UPDATE batches
+  SET actual_size = actual_size - v_total_defects
+  WHERE id = p_batch_id;
+
+  IF NOT FOUND OR (SELECT actual_size FROM batches WHERE id = p_batch_id) < 0 THEN
+    RAISE EXCEPTION 'Total defects exceed actual size for batch %', p_batch_id;
+  END IF;
+
+  INSERT INTO defects (batch_id, batch_status_id, defect_type_id, quantity)
+  SELECT p_batch_id, v_prev_status_id, (item->>'defect_type_id')::INT, (item->>'quantity')::INT
+  FROM jsonb_array_elements(p_defects) AS item
+  WHERE (item->>'quantity')::INT > 0;
+
   UPDATE batches
   SET status_id = v_next_status_id
   WHERE id = p_batch_id
   RETURNING * INTO v_result;
- 
-  INSERT INTO batch_workers (batch_id, status_id, worker_id)
-  VALUES (p_batch_id, v_next_status_id, p_actor_id)
-  ON CONFLICT (batch_id, status_id) DO NOTHING;
- 
+
+  INSERT INTO batch_workers (batch_id, department_id, worker_id)
+  SELECT p_batch_id, st.required_department_id, p_actor_id
+  FROM status_transitions st
+  WHERE st.from_status_id = v_prev_status_id
+    AND st.required_department_id IS NOT NULL
+  ON CONFLICT (batch_id, department_id) DO NOTHING;
+
   INSERT INTO batch_transitions (batch_id, from_status_id, to_status_id, actor_id)
   VALUES (p_batch_id, v_prev_status_id, v_next_status_id, p_actor_id);
- 
+
   RETURN v_result;
 END;
 $$ LANGUAGE plpgsql;
