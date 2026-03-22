@@ -21,7 +21,7 @@ export const getUserController = asyncHandler(async (req: express.Request, res:e
 export const updateUserController = asyncHandler(async (req: express.Request, res: express.Response) => {
   const { id } = paramsSchema.parse(req.params) 
   const data = InsertUserSchema.parse(req.body); 
-  const databaseResult= await updateUserById(id, data)
+  const databaseResult = await updateUserById(id, data)
   if (!databaseResult) throw new HttpError(404, `User with ID ${id} not found`);
   const user = UserFromDatabase.parse(databaseResult); 
   res.status(200).json(user);

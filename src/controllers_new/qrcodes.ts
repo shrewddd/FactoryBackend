@@ -37,8 +37,9 @@ export class QRCodeController {
   });
 
   link = asyncHandler(async (req: express.Request, res: express.Response) => {
-    const data = QRCodeLinkSchema.parse(req.body)
-    const result = await this.qrcodeService.link(data);
+    const { id } = paramsSchema.parse(req.params);
+    const { resource }= QRCodeLinkSchema.parse(req.body)
+    const result = await this.qrcodeService.link(id, resource);
     res.status(200).json(result);
   });
 

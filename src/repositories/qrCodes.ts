@@ -46,6 +46,6 @@ export class QRCodeRepository {
   async link(id: number, resource: string) {
     const result = await query(`UPDATE qr_codes SET resource = $2 WHERE id = $1 RETURNING *`, [id, resource])
     const rows = result.rows;
-    return QRCodeFromRow.parse(rows);
+    return QRCodeFromRow.parse(rows[0]);
   }
 }

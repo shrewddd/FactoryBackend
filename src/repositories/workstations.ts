@@ -10,7 +10,7 @@ export class WorkstationRepository {
   }
 
   async find(id: number): Promise<Workstation> {
-    const result = await query<WorkstationRow>(`SELECT * FROM workstation WHERE id = $1 LIMIT 1`, [id]);
+    const result = await query<WorkstationRow>(`SELECT * FROM workstations WHERE id = $1 LIMIT 1`, [id]);
     const rows = result.rows;
     return WorkstationFromRow.parse(rows[0])
   }

@@ -40,7 +40,6 @@ export const QRCodeInitialzieSchema = QRCodeInsertSchema
 );
 
 export const QRCodeLinkSchema = z.object({
-  id: DbId,
   resource: z.string(),
 });
 

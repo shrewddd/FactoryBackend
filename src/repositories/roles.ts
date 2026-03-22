@@ -23,7 +23,7 @@ export class RoleRepository {
 
   async createMany(data: RoleInsert[]): Promise<Role[]> {
     const { placeholders, values } = buildValuesPlaceholders<RoleInsert>(data, item => [item.label, item.canOverrideWorkflow, item.isActive])
-    const result = await query<RoleRow>(`INSERT INTO roles (label, can_override_worklfow, is_active) VALUES ${placeholders}`, [values]);
+    const result = await query<RoleRow>(`INSERT INTO roles (label, can_override_workflow, is_active) VALUES ${placeholders}`, values);
     const rows = result.rows;
     return RoleFromRow.array().parse(rows);
   }

@@ -64,7 +64,7 @@ export const deleteQRCodeController = asyncHandler(async (req: express.Request, 
 export const activateQRCodeController = asyncHandler(async (req: express.Request, res: express.Response) => {
   const { id } = paramsSchema.parse(req.params);
   const resource = req.body.resource; 
-  if(resource == undefined) throw new HttpError(400, "Resource was not provided");
+  if(resource === undefined) throw new HttpError(400, "Resource was not provided");
   const data = await service.activate(id, resource);
   if(!data) throw new HttpError(404, `QR-Code with ID ${id} not found`);
   const result = QRCodeFromDatabase.parse(data);
