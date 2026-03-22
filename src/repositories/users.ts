@@ -3,21 +3,67 @@ import { UserFromRow, type User, type UserInsert, type UserLookup, type UserRow 
 import { buildValuesPlaceholders } from "utils/queries/bulkInsert";
 
 export class UserRepository {
+  private readonly WITH_ALL_QUERY = `
+  SELECT
+    u.*,
+    r.label                  AS role_label,
+    r.is_active              AS role_is_active,
+    r.can_override_workflow  AS role_can_override_workflow,
+    COALESCE(
+      JSON_AGG(
+        JSON_BUILD_OBJECT(
+          'id',       d.id,
+          'label',    d.label,
+          'is_active', d.is_active
+        )
+      ) FILTER (WHERE d.id IS NOT NULL),
+      '[]'
+    ) AS departments
+  FROM users u
+  LEFT JOIN roles r             ON r.id = u.role_id
+  LEFT JOIN user_departments ud ON ud.user_id = u.id
+  LEFT JOIN departments d       ON d.id = ud.department_id
+`;
+
   async findMany(): Promise<User[]> {
-    const result = await query<UserRow>(`SELECT * FROM users`);
-    const rows = result.rows;
-    return UserFromRow.array().parse(rows);
+    const result = await query<UserRow>(
+      `${this.WITH_ALL_QUERY}
+    GROUP BY u.id, r.id`,
+    );
+    return UserFromRow.array().parse(result.rows);
   }
 
   async find(by: UserLookup): Promise<User | null> {
     const [field, value] = Object.entries(by)[0] ?? [];
-    if (!field || value === undefined) throw new Error('Invalid lookup');
-    const result = await query<UserRow>(`SELECT * FROM users WHERE ${field} = $1 LIMIT 1`, [value]);
-    const rows = result.rows;
-    if (!rows[0]) return null;
-    return UserFromRow.parse(rows[0]);
+    if (!field || value === undefined) throw new Error("Invalid lookup");
+
+    const result = await query<UserRow>(
+      `${this.WITH_ALL_QUERY}
+    WHERE u.${field} = $1
+    GROUP BY u.id, r.id
+    LIMIT 1`,
+      [value],
+    );
+
+    if (!result.rows[0]) return null;
+    return UserFromRow.parse(result.rows[0]);
   }
 
+  // async findMany(): Promise<User[]> { # WIP, will add include { } thing later
+  //   const result = await query<UserRow>(`SELECT * FROM users`);
+  //   const rows = result.rows;
+  //   return UserFromRow.array().parse(rows);
+  // }
+  //
+  // async find(by: UserLookup): Promise<User | null> {
+  //   const [field, value] = Object.entries(by)[0] ?? [];
+  //   if (!field || value === undefined) throw new Error("Invalid lookup");
+  //   const result = await query<UserRow>(`SELECT * FROM users WHERE ${field} = $1 LIMIT 1`, [value]);
+  //   const rows = result.rows;
+  //   if (!rows[0]) return null;
+  //   return UserFromRow.parse(rows[0]);
+  // }
+  //
   async create(data: UserInsert): Promise<User> {
     const result = await query<UserRow>(
       `INSERT INTO users (
@@ -68,7 +114,7 @@ export class UserRepository {
     ]);
     const result = await query<UserRow>(
       `INSERT INTO users (code, username, first_name, last_name, patronymic, date_of_birth, email, phone, gender, role_id, is_active) VALUES ${placeholders}`,
-      values
+      values,
     );
     const rows = result.rows;
     return UserFromRow.array().parse(rows);
@@ -105,7 +151,7 @@ export class UserRepository {
         data.isActive,
       ],
     );
-    if (data.departmentIds?.length) this.updateDepartments(id, data.departmentIds);
+    if (data.departmentIds) this.updateDepartments(id, data.departmentIds);
     const rows = result.rows;
     return UserFromRow.parse(rows[0]);
   }
