@@ -20,9 +20,19 @@ export class ProductService {
     return products;
   }
 
+  async create(data: ProductInsert) {
+    const product = await this.productRepository.create(data);
+    return product;
+  }
+
   async update(id: number, data: ProductInsert) {
     const product = await this.productRepository.update(id, data);
     if (!product) throw new HttpError(404, `Product with ID ${id} not found`)
     return product;
+  }
+
+  async findQuantities() {
+    const products: any = await this.productRepository.findQuantities();
+    return products;
   }
 }

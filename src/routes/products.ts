@@ -7,9 +7,9 @@ const router = express.Router();
 const controller = new ProductController()
 
 router.get('/', authenticate, controller.findMany)
+router.get('/quantities', authenticate, controller.findQuantities)
 router.get('/:id', controller.find)
 // router.post('/', authenticate, controller.create) WIP
 router.put('/:id', authenticate, controller.update)
-// router.delete('/:id', authenticate, controller.delete) WIP
 
 export default router;

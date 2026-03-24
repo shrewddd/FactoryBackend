@@ -29,4 +29,11 @@ export class ProductController {
     const result = await this.productService.update(id, data);
     res.status(200).json(result);
   });
+
+  // delete
+
+  findQuantities = asyncHandler(async (req: express.Request, res: express.Response) => {
+    const result = await this.productService.findQuantities();
+    res.status(200).json(result);
+  });
 }

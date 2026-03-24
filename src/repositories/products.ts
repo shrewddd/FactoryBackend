@@ -43,4 +43,51 @@ export class ProductRepository {
     const rows = result.rows;
     return ProductFromRow.parse(rows[0]);
   }
+
+  async findQuantities() {
+    const findQuery = `WITH status_quantities AS (
+      SELECT
+      p.id                    AS product_id,
+      p.name                  AS product_name,
+      p.measure_unit_id       AS measure_unit_id,
+      bs.id                   AS status_id,
+      bs.label                AS status_label,
+      bs.sort_order           AS status_sort_order,
+      bs.is_terminal          AS status_is_terminal,
+      COALESCE(SUM(b.actual_size), 0)  AS quantity,
+      COUNT(b.id)                      AS batch_count
+      FROM products p
+      CROSS JOIN batch_statuses bs
+      LEFT JOIN batches b       ON  b.product_id = p.id
+      AND b.status_id  = bs.id
+      AND b.is_active  = TRUE
+      WHERE p.is_active  = TRUE
+      AND bs.is_active = TRUE
+      GROUP BY
+      p.id, p.name, p.measure_unit_id,
+      bs.id, bs.label, bs.sort_order, bs.is_terminal
+      )
+      SELECT
+      product_id,
+      product_name,
+      measure_unit_id,
+      JSON_AGG(
+      JSON_BUILD_OBJECT(
+      'status', JSON_BUILD_OBJECT(
+      'id',         status_id,
+      'label',      status_label,
+      'sortOrder',  status_sort_order,
+      'isTerminal', status_is_terminal
+      ),
+      'quantity',   quantity,
+      'batchCount', batch_count
+      ) ORDER BY status_sort_order
+      )                         AS quantity
+      FROM status_quantities
+      GROUP BY product_id, product_name, measure_unit_id
+      HAVING SUM(quantity) > 0
+      ORDER BY product_name`;
+    const result = await query(findQuery);
+    return result.rows;
+  }
 }
