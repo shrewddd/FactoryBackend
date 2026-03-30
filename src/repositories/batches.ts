@@ -140,6 +140,10 @@ export class BatchRepository {
     return BatchFromRow.parse(result);
   }
 
+  async softDelete(id: number): Promise<Batch> {
+    const result = await query<BatchRow>(`DELETE FROM batches WHERE id = $1 RETURNING *`, [id]);
+  }
+
   async delete(id: number): Promise<Batch> {
     const result = await query<BatchRow>(`DELETE FROM batches WHERE id = $1 RETURNING *`, [id]);
     const rows = result.rows;
