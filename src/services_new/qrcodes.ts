@@ -1,4 +1,4 @@
-import { QRCodeRepository } from "repositories/qrCodes";
+import { QRCodeRepository } from "repositories/qrcodes";
 import type { QRCodeInitialize, QRCodeInsert, QRCodeLink } from "schemas/qrcode";
 import { HttpError } from "utils/errorHandler";
 
