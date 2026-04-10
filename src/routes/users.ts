@@ -1,4 +1,4 @@
-import { UserController } from "controllers_new/users";
+import { UserController } from "controllers/users";
 import express from "express";
 import { authenticate } from "middleware/auth";
 

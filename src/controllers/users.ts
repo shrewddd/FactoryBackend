@@ -1,7 +1,7 @@
 import type express from "express";
 import { UserInsertSchema, UserLoginSchema, UserRegisterSchema } from "schemas/user";
 import { paramsSchema } from "schemas/utils";
-import { UserService } from "services_new/users";
+import { UserService } from "services/users";
 import { asyncHandler } from "utils/errorHandler";
 
 export class UserController {

@@ -1,5 +1,5 @@
 import { paramsSchema } from "schemas/utils";
-import { WorkstationService } from "services_new/workstations";
+import { WorkstationService } from "services/workstations";
 import { asyncHandler } from "utils/errorHandler";
 import type express from "express";
 

@@ -1,4 +1,4 @@
-import { AuthenticationController } from 'controllers_new/auth';
+import { AuthenticationController } from 'controllers/auth';
 import express from 'express'
 import { authenticate } from 'middleware/auth';
 

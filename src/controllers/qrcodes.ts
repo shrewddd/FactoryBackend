@@ -1,4 +1,4 @@
-import { QRCodeService } from "services_new/qrcodes";
+import { QRCodeService } from "services/qrcodes";
 import type express from "express";
 import { asyncHandler } from "utils/errorHandler";
 import { paramsSchema } from "schemas/utils";

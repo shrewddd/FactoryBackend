@@ -1,6 +1,6 @@
 import express from "express"
 import { authenticate } from "middleware/auth";
-import { WorkstationController } from "controllers_new/workstations";
+import { WorkstationController } from "controllers/workstations";
 
 const router = express.Router()
 

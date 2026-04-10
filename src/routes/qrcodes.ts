@@ -1,4 +1,4 @@
-import { QRCodeController } from "controllers_new/qrcodes";
+import { QRCodeController } from "controllers/qrcodes";
 import express from "express"
 import { authenticate } from "middleware/auth";
 

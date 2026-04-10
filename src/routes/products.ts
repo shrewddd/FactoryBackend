@@ -1,4 +1,4 @@
-import { ProductController } from 'controllers_new/products';
+import { ProductController } from 'controllers/products';
 import express from 'express'
 import { authenticate } from 'middleware/auth';
 

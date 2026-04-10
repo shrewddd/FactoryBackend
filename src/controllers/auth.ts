@@ -1,6 +1,6 @@
 import type express from "express";
 import { UserLoginSchema, UserRegisterSchema } from "schemas/user";
-import { AuthenticationService } from "services_new/auth";
+import { AuthenticationService } from "services/auth";
 import { asyncHandler, HttpError } from "utils/errorHandler";
 
 export class AuthenticationController {

@@ -1,4 +1,4 @@
-import { BatchController } from "controllers_new/batches";
+import { BatchController } from "controllers/batches";
 import express from "express";
 import { authenticate } from "middleware/auth";
 

@@ -1,6 +1,6 @@
 import express from "express";
 import { asyncHandler } from "utils/errorHandler";
-import { ProductService } from "services_new/products";
+import { ProductService } from "services/products";
 import { paramsSchema } from "schemas/utils";
 import { ProductInsertSchema } from "schemas/products";
 
