@@ -1,4 +1,4 @@
-import { migrateDatabase, testDatabase } from "controllers/database"; import express from "express"
+import { migrateDatabase, testDatabase } from "controllers_new/database"; import express from "express"
 import { asyncHandler } from "utils/errorHandler";
 import { seed } from "utils/queries/seed";
 
