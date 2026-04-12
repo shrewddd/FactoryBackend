@@ -22,7 +22,11 @@ export class BatchRepository {
           ),
           'worker', JSON_BUILD_OBJECT(
             'id',       u.id,
-            'fullName', u.full_name
+            'fullName', u.full_name,
+            'role',     JSON_BUILD_OBJECT(
+              'id',    r.id,
+              'label', r.label
+            )
           )
         )
       ) FILTER (WHERE bw.id IS NOT NULL),
@@ -35,6 +39,7 @@ export class BatchRepository {
   LEFT JOIN batch_workers  bw ON bw.batch_id = b.id
   LEFT JOIN departments    d  ON d.id  = bw.department_id
   LEFT JOIN users          u  ON u.id  = bw.worker_id
+  LEFT JOIN roles          r  ON r.id  = u.role_id
 `;
 
   async findMany(): Promise<Batch[]> {

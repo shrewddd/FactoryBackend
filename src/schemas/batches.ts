@@ -5,6 +5,7 @@ import { WorkstationSchema } from "./workstations";
 import { BatchStatusSchema } from "./batchStatuses";
 import { DepartmentSchema } from "./departments";
 import { UserSchema } from "./user";
+import { RoleSchema } from "./roles";
 
 export const BatchWorkerSchema = z.object({
   department: z.object({
@@ -14,6 +15,10 @@ export const BatchWorkerSchema = z.object({
   worker: z.object({
     id: UserSchema.shape.id,
     fullName: UserSchema.shape.fullName.nullish(),
+    role: z.object({
+      id: RoleSchema.shape.id,
+      label: RoleSchema.shape.label.nullish(),
+    }).nullish(),
   }),
 });
 

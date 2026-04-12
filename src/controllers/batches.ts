@@ -4,7 +4,6 @@ import { asyncHandler } from "utils/errorHandler";
 import type express from "express";
 import { BatchService } from "services/batches";
 import { BatchInsertSchama } from "schemas/batches";
-import { size } from "zod";
 
 export class BatchController {
 
