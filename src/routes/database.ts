@@ -1,14 +1,9 @@
-import { migrateDatabase, testDatabase } from "controllers_new/database"; import express from "express"
-import { asyncHandler } from "utils/errorHandler";
-import { seed } from "utils/queries/seed";
+import { migrateDatabase, seedDatabase, testDatabase } from "controllers/database"; import express from "express"
 
 const router = express.Router()
 
 router.get("/test", testDatabase)
 router.get("/migrate", migrateDatabase)
-router.get("/seed", asyncHandler(async (req: express.Request, res: express.Response) => {
-  await seed();
-  res.status(200).end();
-}))
+router.get("/seed", seedDatabase)
 
 export default router;
