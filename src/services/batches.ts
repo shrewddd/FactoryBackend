@@ -2,7 +2,6 @@ import { BatchRepository } from "repositories/batches";
 import type { BatchInsert } from "schemas/batches";
 
 export class BatchService {
-
   private batchRepository: BatchRepository;
 
   constructor(batchRepository?: BatchRepository) {
@@ -19,9 +18,13 @@ export class BatchService {
     return batch;
   }
 
+  async findPackedStock() {
+    return this.batchRepository.findManyPacked();
+  }
+
   async create(data: BatchInsert) {
-    const batch = await this.batchRepository.create(data)
-    return batch
+    const batch = await this.batchRepository.create(data);
+    return batch;
   }
 
   async update(id: number, data: BatchInsert) {
@@ -35,13 +38,16 @@ export class BatchService {
   }
 
   async advance(
-    id: number, 
+    id: number,
     actorId: number,
-    defects: { defect_type_id: number; quantity: number}[],
+    defects: { defect_type_id: number; quantity: number }[],
     sizeOverride?: number,
   ) {
-    const batch = await this.batchRepository.advance(id, actorId, defects, sizeOverride);
+    const batch = await this.batchRepository.newAdvance(id, actorId, defects, sizeOverride);
     return batch;
   }
-}
 
+  async pack(id: number, actorId: number, remain: number, defects: { defect_type_id: number; quantity: number }[]) {
+    return this.batchRepository.packBatch(id, actorId, remain, defects);
+  }
+}

@@ -24,6 +24,11 @@ export class BatchController {
     res.status(200).json(result);
   });
 
+  findPackedStock = asyncHandler(async (_req: express.Request, res: express.Response) => {
+    const result = await this.batchService.findPackedStock();
+    res.status(200).json(result);
+  });
+
   create = asyncHandler(async (req: express.Request, res: express.Response) => {
     console.log(req.body)
     const data = BatchInsertSchama.parse(req.body)
@@ -56,5 +61,14 @@ export class BatchController {
     const { defects = [], sizeOverride } = req.body;
     const result = await this.batchService.advance(id, actorId, defects, sizeOverride);
     res.status(200).json(result);
+
   });
+
+pack = asyncHandler(async (req: express.Request, res: express.Response) => {
+  const { id } = paramsSchema.parse(req.params);
+  const actorId = req.userId ?? 0;
+  const { defects = [], remain = 0 } = req.body;
+  const result = await this.batchService.pack(id, actorId, remain, defects);
+  res.status(200).json(result);
+});
 }

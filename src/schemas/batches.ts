@@ -29,7 +29,7 @@ const shared = {
 }
 
 const mapped = {
-  actualSize: z.int().positive().nullish(),
+  actualSize: z.int().min(0).nullish(),
   product: z.object({
     id: ProductSchema.shape.id.nullish(),
     name: ProductSchema.shape.name.nullish(),
