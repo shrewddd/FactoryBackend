@@ -31,6 +31,11 @@ export class QRCodeService {
     return qrcodes;
   }
 
+  async delete(id: number) {
+    const batch = await this.qrcodeRepository.delete(id);
+    return batch;
+  }
+
   async link(id: number, resource: string) {
     const qrcode = await this.qrcodeRepository.link(id, resource)
     if(!qrcode) throw new HttpError(404, `QR-Code with ID ${id} not found`);

@@ -36,6 +36,13 @@ export class QRCodeController {
     res.status(201).json(result);
   });
 
+  delete = asyncHandler(async (req: express.Request, res: express.Response) => {
+    console.log("Delete qr controller")
+    const { id } = paramsSchema.parse(req.params);
+    const result = await this.qrcodeService.delete(id);
+    res.status(200).json(result);
+  });
+
   link = asyncHandler(async (req: express.Request, res: express.Response) => {
     const { id } = paramsSchema.parse(req.params);
     const { resource }= QRCodeLinkSchema.parse(req.body)
