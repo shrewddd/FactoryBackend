@@ -53,7 +53,7 @@ export class QRCodeController {
   scan = asyncHandler(async (req: express.Request, res: express.Response) => {
     const { id } = paramsSchema.parse(req.params);
     const result = await this.qrcodeService.find(id);
-    if (result.resource) res.redirect(result.resource);
-    res.redirect(`${CLIENT_URL}/qrcodes/${result.id}`)
+    if (result.resource) return res.redirect(result.resource);
+    return res.redirect(`${CLIENT_URL}/qrcodes/${result.id}`)
   });
 }
