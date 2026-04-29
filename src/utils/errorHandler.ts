@@ -31,6 +31,13 @@ export const asyncHandler = (fn: AsyncController) => async (req: express.Request
     }
 
     logger.error(error);
-    return res.status(500).json({ error: "Internal server error" });
+
+    return res.status(500).json({
+      error: error instanceof Error
+        ? error.message
+        : "Internal server error",
+    });
+
+    // return res.status(500).json({ error: "Internal server error" });
   }
 };
