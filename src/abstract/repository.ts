@@ -56,11 +56,16 @@ export abstract class Repository<T, TRow extends QueryResultRow, TLookup extends
   }
 
   async update(id: number, data: TInsert): Promise<T> {
-    const result = await query<TRow>(`UPDATE ${this.tableName} SET ${this.fields.map((item, i) => (`${item} = ${i + 2}`))} WHERE id = $1 RETURNING *`, [id, ...this.toValues(data)]);
+    const result = await query<TRow>(`UPDATE ${this.tableName} SET ${this.fields.map((item, i) => (`${item} = $${i + 2}`))} WHERE id = $1 RETURNING *`, [id, ...this.toValues(data)]);
     const rows = result.rows;
     return this.schema.parse(rows);
   }
 
+  async updateMany(ids: number[], data: TInsert): Promise<T[]> {
+    const result = await query<TRow>(`UPDATE ${this.tableName} SET ${this.fields.map((item, i) => (`${item} = $${i + 2}`))} WHERE id = ANY($1::int[]) RETURNING *`, [ids, ...this.toValues(data)]);
+    const rows = result.rows;
+    return this.schema.array().parse(rows);
+  }
 
   async delete(id: number): Promise<T> {
     const result = await query<TRow>(`DELETE FROM ${this.tableName} WHERE id = $1 LIMIT 1 RETURNING *`, [id]);
