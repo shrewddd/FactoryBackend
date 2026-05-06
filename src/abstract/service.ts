@@ -1,7 +1,11 @@
-import type { Repository } from "./repository";
+import type { BaseRepository, Lookup } from "./types";
 
-export abstract class Service<T, TInsert, TRepository extends Repository<T, any, any, TInsert>> {
-
+export abstract class Service<
+  T,
+  TInsert,
+  TLookup extends Lookup,
+  TRepository extends BaseRepository<T, TInsert, TLookup>,
+> {
   protected repository: TRepository;
 
   constructor(repository: TRepository) {
@@ -9,7 +13,7 @@ export abstract class Service<T, TInsert, TRepository extends Repository<T, any,
   }
 
   async find(id: number): Promise<T | null> {
-    const result = await this.repository.find(id);
+    const result = await this.repository.find({ id } as any);
     return result;
   }
 

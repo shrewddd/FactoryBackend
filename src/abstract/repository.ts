@@ -1,12 +1,9 @@
 import { query } from "db";
 import type { QueryResultRow } from "pg";
 import type { ZodType } from "zod";
+import type { Lookup, FieldMap, FieldValuePair } from "./types";
 
-type FieldValuePair = { field: string; value: unknown };
-
-type FieldMap<TInsert> = Record<keyof TInsert & string, string>;
-
-export abstract class Repository<T, TRow extends QueryResultRow, TLookup extends Record<string, unknown>, TInsert> {
+export abstract class Repository<T, TRow extends QueryResultRow, TLookup extends Lookup, TInsert> {
   protected tableName: string;
   protected schema: ZodType<T>;
   protected columns: string[];
@@ -93,7 +90,7 @@ export abstract class Repository<T, TRow extends QueryResultRow, TLookup extends
 
   async updateMany(ids: number[], data: TInsert): Promise<T[]> {
     const result = await query<TRow>(
-      `UPDATE ${this.tableName} SET ${this.setClause} WHERE id = ANY($1::int[]) RETURNING *`,
+      `UPDATE ${this.tableName} SET ${this.setClause()} WHERE id = ANY($1::int[]) RETURNING *`,
       [ids, ...this.toValues(data)],
     );
     const rows = result.rows;
