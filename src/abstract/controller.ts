@@ -1,6 +1,6 @@
 import { asyncHandler } from "utils/errorHandler";
 import type express from "express";
-import { paramsSchema } from "schemas/utils";
+import { bulkOperationSchema, paramsSchema } from "schemas/utils";
 import type { Service } from "./service";
 import type { ZodType } from "zod";
 
@@ -30,10 +30,23 @@ export abstract class Controller<T, TInsert, TService extends Service<T, TInsert
     res.status(200).json(result);
   });
 
+  createMany = asyncHandler(async (req: express.Request, res: express.Response) => {
+    const data = this.insertSchema.array().min(1).parse(req.body);
+    const result = await this.service.createMany(data);
+    res.status(200).json(result);
+  });
+
   update = asyncHandler(async (req: express.Request, res: express.Response) => {
     const { id } = paramsSchema.parse(req.params);
     const data = this.insertSchema.parse(req.body);
     const result = await this.service.update(id, data);
+    res.status(200).json(result);
+  });
+
+  updateMany = asyncHandler(async (req: express.Request, res: express.Response) => {
+    const { ids } = bulkOperationSchema.parse(req.body);
+    const data = this.insertSchema.parse(req.body);
+    const result = await this.service.updateMany(ids, data);
     res.status(200).json(result);
   });
 
@@ -44,9 +57,22 @@ export abstract class Controller<T, TInsert, TService extends Service<T, TInsert
     res.status(200).json(result);
   });
 
+  patchMany = asyncHandler(async (req: express.Request, res: express.Response) => {
+    const { ids } = bulkOperationSchema.parse(req.body);
+    const data = this.insertSchema.parse(req.body);
+    const result = await this.service.patchMany(ids, data);
+    res.status(200).json(result);
+  });
+
   delete = asyncHandler(async (req: express.Request, res: express.Response) => {
     const { id } = paramsSchema.parse(req.params);
     const result = await this.service.delete(id);
     res.status(200).json(result);
   });
 
+  deleteMany = asyncHandler(async (req: express.Request, res: express.Response) => {
+    const { ids } = bulkOperationSchema.parse(req.body);
+    const result = await this.service.deleteMany(ids);
+    res.status(200).json(result);
+  });
+}

@@ -20,3 +20,7 @@ export const Timestamps = {
 export const paramsSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
+
+export const bulkOperationSchema = z.object({
+  ids: z.array(z.int().positive()).min(1)
+})
