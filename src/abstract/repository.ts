@@ -1,7 +1,7 @@
 import { query } from "db";
 import type { QueryResultRow } from "pg";
 import type { ZodType } from "zod";
-import type { Lookup, FieldMap, FieldValuePair } from "./types";
+import type { Lookup, FieldMap, FieldValuePair, FieldDef } from "./types";
 
 export abstract class Repository<T, TRow extends QueryResultRow, TLookup extends Lookup, TInsert> {
   protected tableName: string;
@@ -15,15 +15,27 @@ export abstract class Repository<T, TRow extends QueryResultRow, TLookup extends
     this.schema = schema;
     this.fieldMap = fieldMap;
     this.keys = Object.keys(fieldMap) as (keyof TInsert & string)[];
-    this.columns = this.keys.map((k) => fieldMap[k]);
+    this.columns = this.keys.map((k) => this.getColumn(fieldMap[k]));
+  }
+
+  private getColumn(def: FieldDef<TInsert>): string {
+    return typeof def === 'string' ? def : def.column;
   }
 
   protected toValues(data: TInsert): unknown[] {
-    return this.keys.map((key) => data[key]);
+    return this.keys.map((key) => {
+      const def = this.fieldMap[key];
+      return typeof def === 'string' ? data[key] : def.extract(data);
+    });
   }
 
   protected toPartialFieldValues(data: Partial<TInsert>): FieldValuePair[] {
-    return this.keys.filter((key) => key in data).map((key) => ({ field: this.fieldMap[key], value: data[key] }));
+    return this.keys.filter((key) => key in data).map((key) => {
+      const def = this.fieldMap[key];
+      return typeof def === 'string'
+        ? { field: def, value: data[key] }
+        : { field: def.column, value: def.extract(data as TInsert) };
+    })
   }
 
   private placeholders(): string {

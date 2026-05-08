@@ -12,4 +12,6 @@ export type BaseRepository<
 
 export type FieldValuePair = { field: string; value: unknown };
 
-export type FieldMap<TInsert> = Record<keyof TInsert & string, string>;
+export type FieldDef<TInsert> = string | { column: string; extract: (data: TInsert) => unknown }
+
+export type FieldMap<TInsert> = {[K in keyof TInsert & string]: FieldDef<TInsert>}
