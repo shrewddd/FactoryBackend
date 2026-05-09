@@ -14,19 +14,19 @@ export class AuthenticationController {
   register = asyncHandler(async (req: express.Request, res: express.Response) => {
     const data = UserRegisterSchema.parse(req.body);
     const result = await this.authService.register(data);
-    res.status(200).json(result).end();
+    res.status(200).json(result);
   });
 
   login = asyncHandler(async (req: express.Request, res: express.Response) => {
     const data = UserLoginSchema.parse(req.body);
     const token = await this.authService.login(data);
-    res.cookie("token", token, { httpOnly: true, maxAge: 60 * 60 * 1000 });
-    res.status(200).json("Success!").end();
+    res.cookie("token", token, { httpOnly: true, maxAge: 16 * 60 * 60 * 1000 });
+    res.status(200).json("Success!");
   });
 
   logout = asyncHandler(async (req: express.Request, res: express.Response) => {
     res.clearCookie("token", { httpOnly: true });
-    res.status(200).json({ message: "Logged out successfully" }).end();
+    res.status(200).json({ message: "Logged out successfully" });
   });
 
   whoami = asyncHandler(async (req: express.Request, res: express.Response) => {
