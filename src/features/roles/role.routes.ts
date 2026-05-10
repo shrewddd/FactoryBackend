@@ -1,9 +1,9 @@
 import express from "express";
-import { WorkstationController } from "./workstation.controller";
+import { RoleController } from "./role.controller";
 
 const router = express.Router();
 
-const controller = new WorkstationController();
+const controller = new RoleController();
 
 router.get("/", controller.findMany);
 router.post("/", controller.create);

@@ -1,6 +1,5 @@
 import { Repository } from "abstract/repository";
-import { RoleFromRow, type Role, type RoleLookup, type RoleRow } from "./role.schema";
-import type { RoleInsert } from "schemas/roles";
+import { RoleFromRow, type Role, type RoleInsert, type RoleLookup, type RoleRow } from "./role.schema";
 
 export class RoleRepository extends Repository<Role, RoleRow, RoleLookup, RoleInsert> {
   constructor() {

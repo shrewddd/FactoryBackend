@@ -1,9 +1,8 @@
 import { Service } from "abstract/service";
 import { RoleRepository } from "./role.repository";
-import type { Role, RoleRow } from "schemas/roles";
-import type { RoleLookup } from "./role.schema";
+import type { Role, RoleInsert, RoleLookup } from "./role.schema";
 
-export class RoleService extends Service<Role, RoleRow, RoleLookup, RoleRepository> {
+export class RoleService extends Service<Role, RoleInsert, RoleLookup, RoleRepository> {
   constructor(repo: RoleRepository = new RoleRepository()){
     super(repo)
   }

@@ -8,8 +8,8 @@ const shared = {
 };
 
 const mapped = {
-  canOverrideWorkflow: z.boolean().nullable().default(false),
-  isActive: z.boolean().nullable().default(true),
+  canOverrideWorkflow: z.boolean().default(false),
+  isActive: z.boolean().default(true),
 };
 
 export const RoleSchema = z.object({ ...shared, ...mapped });
