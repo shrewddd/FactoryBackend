@@ -1,6 +1,7 @@
 import { Repository } from "abstract/repository";
 import { UserFromRow, type User, type UserInsert, type UserLookup, type UserRow } from "./user.schema";
 import { query } from "db";
+import { USER_WITH_ALL_QUERY } from "./user.queries";
 
 export class UserRepository extends Repository<User, UserRow, UserLookup, UserInsert> {
   constructor() {
@@ -20,29 +21,8 @@ export class UserRepository extends Repository<User, UserRow, UserLookup, UserIn
     });
   }
 
-  private readonly WITH_ALL_QUERY = `
-    SELECT
-      u.*,
-      r.label                  AS role_label,
-      r.is_active              AS role_is_active,
-      r.can_override_workflow  AS role_can_override_workflow,
-      COALESCE(
-        JSON_AGG(
-          JSON_BUILD_OBJECT(
-            'id',       d.id,
-            'label',    d.label,
-            'is_active', d.is_active
-          )
-        ) FILTER (WHERE d.id IS NOT NULL),
-        '[]'
-      ) AS departments
-    FROM users u
-    LEFT JOIN roles r             ON r.id = u.role_id
-    LEFT JOIN user_departments ud ON ud.user_id = u.id
-    LEFT JOIN departments d       ON d.id = ud.department_id`;
-
   async findMany(): Promise<User[]> {
-    const result = await query<UserRow>(`${this.WITH_ALL_QUERY} GROUP BY u.id, r.id`);
+    const result = await query<UserRow>(`${USER_WITH_ALL_QUERY} GROUP BY u.id, r.id`);
     return UserFromRow.array().parse(result.rows);
   }
 
@@ -50,7 +30,7 @@ export class UserRepository extends Repository<User, UserRow, UserLookup, UserIn
     const [field, value] = Object.entries(by)[0] ?? [];
     if (!field || value === undefined) throw new Error("Invalid lookup");
 
-    const result = await query<UserRow>(`${this.WITH_ALL_QUERY} WHERE u.${field} = $1 GROUP BY u.id, r.id LIMIT 1`, [
+    const result = await query<UserRow>(`${USER_WITH_ALL_QUERY} WHERE u.${field} = $1 GROUP BY u.id, r.id LIMIT 1`, [
       value,
     ]);
 
