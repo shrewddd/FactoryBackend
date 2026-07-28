@@ -6,6 +6,7 @@ const relations = {
   milestone: z.object({
     id: BatchStatusSchema.shape.id,
     label: BatchStatusSchema.shape.label,
+    isInventoryMilestone: BatchStatusSchema.shape.isInventoryMilestone,
     quantity: z.number(),
   }),
   product: z.object({
@@ -26,6 +27,7 @@ export const ProductQuantitiesByMilestoneSchema = z.object({
 const MilestoneSumRowSchema = z.object({
   milestoneId: relations.milestone.shape.id,
   milestoneLabel: relations.milestone.shape.label,
+  isInventoryMilestone: relations.milestone.shape.isInventoryMilestone,
   quantity: z.number(),
 });
 
@@ -48,6 +50,7 @@ export const ProductQuantitiesByMilestoneFromRow = ProductQuantitiesByMilestoneR
   milestones: row.milestone_sums.map((m) => ({
     id: m.milestoneId,
     label: m.milestoneLabel,
+    isInventoryMilestone: m.isInventoryMilestone,
     quantity: m.quantity,
   })),
   readyQuantity: row.ready_quantity,

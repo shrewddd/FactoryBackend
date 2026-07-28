@@ -26,6 +26,7 @@ export class BatchStatusRepository extends Repository<
       isPackaging: "is_packaging",
       subtractDefects: "subtract_defects",
       isMilestone: "is_milestone",
+      isInventoryMilestone: "is_inventory_milestone",
       department: { column: "department_id", extract: (d) => d.department?.id || undefined }
     });
   }

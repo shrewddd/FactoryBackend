@@ -17,6 +17,7 @@ const mapped = {
   isPackaging: z.boolean().default(false),
   subtractDefects: z.boolean().default(true),
   isMilestone: z.boolean().default(false),
+  isInventoryMilestone: z.boolean().default(false),
 };
 
 const relations = {
@@ -40,6 +41,7 @@ export const BatchStatusRowSchema = z.object({
   is_packaging: mapped.isPackaging,
   subtract_defects: mapped.subtractDefects,
   is_milestone: mapped.isMilestone,
+  is_inventory_milestone: mapped.isInventoryMilestone,
   department_id: DepartmentSchema.shape.id.nullish(),
   department_label: DepartmentSchema.shape.label.nullish(),
 });
@@ -56,6 +58,7 @@ export const BatchStatusFromRow = BatchStatusRowSchema.transform((row) => {
     is_packaging,
     subtract_defects,
     is_milestone,
+    is_inventory_milestone,
     department_id,
     department_label,
     ...rest
@@ -72,6 +75,7 @@ export const BatchStatusFromRow = BatchStatusRowSchema.transform((row) => {
     isPackaging: is_packaging,
     subtractDefects: subtract_defects,
     isMilestone: is_milestone,
+    isInventoryMilestone: is_inventory_milestone,
     department: department_id
       ? {
         id: department_id,

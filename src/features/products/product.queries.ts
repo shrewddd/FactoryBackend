@@ -71,9 +71,9 @@ ORDER BY p.name;
 
 export const FIND_INVENTORY_QUERY = `
 WITH milestones AS (
-  SELECT id, label, sort_order
+  SELECT id, label, sort_order, is_inventory_milestone
   FROM batch_statuses
-  WHERE is_milestone = TRUE AND is_active = TRUE
+  WHERE is_inventory_milestone = TRUE AND is_active = TRUE
 ),
 status_milestone_map AS (
   -- maps every active status to the next milestone status (by sort_order) it belongs to
@@ -81,10 +81,11 @@ status_milestone_map AS (
     bs.id AS status_id,
     m.id AS milestone_id,
     m.label AS milestone_label,
-    m.sort_order AS milestone_sort_order
+    m.sort_order AS milestone_sort_order,
+    m.is_inventory_milestone AS milestone_is_inventory_milestone
   FROM batch_statuses bs
   JOIN LATERAL (
-    SELECT id, label, sort_order
+    SELECT id, label, sort_order, is_inventory_milestone
     FROM milestones
     WHERE sort_order >= bs.sort_order
     ORDER BY sort_order ASC
@@ -98,6 +99,7 @@ batch_sums AS (
     smm.milestone_id,
     smm.milestone_label,
     smm.milestone_sort_order,
+    smm.milestone_is_inventory_milestone,
     COALESCE(SUM(b.size), 0) AS quantity
   FROM products p
   CROSS JOIN status_milestone_map smm
@@ -106,7 +108,7 @@ batch_sums AS (
    AND b.status_id = smm.status_id
    AND b.is_active = TRUE
   WHERE p.is_active = TRUE
-  GROUP BY p.id, smm.milestone_id, smm.milestone_label, smm.milestone_sort_order
+  GROUP BY p.id, smm.milestone_id, smm.milestone_label, smm.milestone_sort_order, smm.milestone_is_inventory_milestone
 ),
 storage_sums AS (
   SELECT
@@ -124,6 +126,7 @@ SELECT
     JSON_BUILD_OBJECT(
       'milestoneId', bsu.milestone_id,
       'milestoneLabel', bsu.milestone_label,
+      'isInventoryMilestone', bsu.milestone_is_inventory_milestone,
       'quantity', bsu.quantity
     ) ORDER BY bsu.milestone_sort_order
   ) AS milestone_sums,
