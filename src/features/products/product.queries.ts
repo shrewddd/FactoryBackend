@@ -119,6 +119,7 @@ storage_sums AS (
 SELECT
   p.id AS product_id,
   p.name AS product_name,
+  p.bar_code AS product_bar_code,
   JSON_AGG(
     JSON_BUILD_OBJECT(
       'milestoneId', bsu.milestone_id,
@@ -133,6 +134,6 @@ FROM products p
 JOIN batch_sums bsu ON bsu.product_id = p.id
 LEFT JOIN storage_sums ss ON ss.product_id = p.id
 WHERE p.is_active = TRUE
-GROUP BY p.id, p.name, p.quantity, ss.storage_quantity
+GROUP BY p.id, p.name, p.bar_code, p.quantity, ss.storage_quantity
 ORDER BY p.name;
 `;

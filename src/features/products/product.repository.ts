@@ -24,6 +24,7 @@ export class ProductRepository extends Repository<Product, ProductRow, ProductLo
       isActive: "is_active",
       quantity: "quantity",
       boxSize: "box_size",
+      barCode: "bar_code",
     });
   }
 

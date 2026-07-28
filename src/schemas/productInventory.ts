@@ -11,6 +11,7 @@ const relations = {
   product: z.object({
     id: ProductSchema.shape.id,
     name: ProductSchema.shape.name,
+    barCode: ProductSchema.shape.barCode,
   }),
 };
 
@@ -31,6 +32,7 @@ const MilestoneSumRowSchema = z.object({
 export const ProductQuantitiesByMilestoneRowSchema = z.object({
   product_id: relations.product.shape.id,
   product_name: relations.product.shape.name,
+  product_bar_code: relations.product.shape.barCode,
   milestone_sums: z.array(MilestoneSumRowSchema),
   ready_quantity: z.number(),
   storage_quantity: z.coerce.number(),
@@ -41,6 +43,7 @@ export const ProductQuantitiesByMilestoneFromRow = ProductQuantitiesByMilestoneR
   product: {
     id: row.product_id,
     name: row.product_name,
+    barCode: row.product_bar_code,
   },
   milestones: row.milestone_sums.map((m) => ({
     id: m.milestoneId,
