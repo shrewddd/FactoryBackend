@@ -48,7 +48,6 @@ export class BatchRepository extends Repository<Batch, BatchRow, BatchLookup, Ba
   }
 
   async findActiveByWorker(actorId: number): Promise<Batch[]> {
-    console.log("find active",actorId)
     const result = await query<BatchRow>(FIND_ACTIVE_BY_WORKER_QUERY, [actorId]);
     return BatchFromRow.array().parse(result.rows);
   }

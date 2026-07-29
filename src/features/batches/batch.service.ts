@@ -12,6 +12,7 @@ import { ProductRepository } from "features/products/product.repository";
 import { ShiftRepository } from "features/shifts/shift.repository";
 import type { Defect, DefectInsert } from "features/defects/defect.schema";
 import { BatchStatusRepository } from "features/batchStatuses/batchStatus.repository";
+import logger from "logger";
 
 export class BatchService extends Service<Batch, BatchInsert, BatchLookup, BatchRepository> {
   private statusTransitionRepository: StatusTransitionRepository;
@@ -63,39 +64,39 @@ export class BatchService extends Service<Batch, BatchInsert, BatchLookup, Batch
 
     return transaction(async () => {
 
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 1. Advance started `)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 1. Advance started `)
       const batch = await this.repository.find({ id: batchId });
 
       if (!batch) throw new Error(`Batch ${batchId} not found`);
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 2. Batch found`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 2. Batch found`)
 
       if (!batch.product || !batch.product.id) throw new Error(`Batch ${batchId} does not have product`);
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 3. Batch product present`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 3. Batch product present`)
 
       if (batch.status.isTerminal) throw new Error(`Batch ${batchId} is already in a terminal status`);
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 4. Batch is not terminal`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 4. Batch is not terminal`)
 
       const statusTransition = await this.statusTransitionRepository.find({ fromStatus: { id: batch.status.id } });
 
       if (!statusTransition) throw new Error(`No transition defined from current status of batch ${batchId}`);
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 5. Status transition found`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 5. Status transition found`)
 
       const actor = await this.userRepository.find({ id: actorId });
 
       if (!actor) throw new Error(`User ${actorId} not found`);
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 6. Actor found`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 6. Actor found`)
 
       const shift = await this.shiftRepository.findActiveByWorkerId(actor.id)
 
       if (!shift) throw new Error(`User ${actorId} does not have active shift`);
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 7. Shift found`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 7. Shift found`)
 
       if (!shift.device) throw new Error(`User ${actorId} does not have active device`);
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 8. Device found`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 8. Device found`)
 
       if (!shift.device.department) throw new Error(`No enough shift data, missing department`)
 
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 9. Device department found`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 9. Device department found`)
 
       const from = await this.statusRepository.find({ id: statusTransition.fromStatus.id })
       const to = await this.statusRepository.find({ id: statusTransition.toStatus.id })
@@ -103,10 +104,10 @@ export class BatchService extends Service<Batch, BatchInsert, BatchLookup, Batch
 
       statusTransition.fromStatus = from;
       statusTransition.toStatus = to;
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 10. From/To set`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 10. From/To set`)
 
       if (statusTransition.required) {
-        console.log(`Batch: ${batchId} | Actor: ${actorId}: 11. Requirements found`)
+        logger.info(`Batch: ${batchId} | Actor: ${actorId}: 11. Requirements found`)
         const requiredRole = statusTransition.required.role 
         if (requiredRole && requiredRole.id != null && requiredRole.id !== actor.role.id)
           throw new Error(`User ${actorId} does not have role required for this`);
@@ -119,34 +120,34 @@ export class BatchService extends Service<Batch, BatchInsert, BatchLookup, Batch
           throw new Error(`Device ${shift.device.id} can not work in department ${requiredDepartment.id}`);
       } else{
 
-        console.log(`Batch: ${batchId} | Actor: ${actorId}: 11. No requirements`)
+        logger.info(`Batch: ${batchId} | Actor: ${actorId}: 11. No requirements`)
       }
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 12. Requirements group is over`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 12. Requirements group is over`)
 
       const actorBatchesInProgress = await this.repository.findActiveByWorker(actorId);
       const packStatus = [12, 13, 14] 
       const limit = packStatus.includes(batch.status.id) ?  PACKING_BATCHES_LIMIT : IN_PROGRESS_BATCHES_LIMIT
-      console.log(!batch.status.isInProgress, actorBatchesInProgress.length, limit, actorBatchesInProgress.length >= limit, !actor.role.canOverrideWorkflow)
+      logger.info(`${!batch.status.isInProgress}, ${actorBatchesInProgress.length}, ${limit}, ${actorBatchesInProgress.length >= limit}, ${!actor.role.canOverrideWorkflow}`)
       if (!batch.status.isInProgress && actorBatchesInProgress.length >= limit && !actor.role.canOverrideWorkflow)
           throw new Error(`User ${actorId} is already working: ${actorBatchesInProgress.map(item => item.id)}`);
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 13. Active Batches check passed`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 13. Active Batches check passed`)
 
 
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 14. Size override started`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 14. Size override started`)
       if (statusTransition.fromStatus.requiresSizeInput) {
         if (sizeOverride === null || sizeOverride === undefined) throw new Error(`Size was not provided for ${batchId}`);
         if (sizeOverride <= 0) throw new Error(`Size can not be negative for ${batchId}`);
         await this.repository.patch(batchId, { size: sizeOverride });
         batch.size = sizeOverride;
-        console.log(`Batch: ${batchId} | Actor: ${actorId}: 14.1. Size override passed b:${batch.size} s:${sizeOverride}, bid: ${batchId}`)
+        logger.info(`Batch: ${batchId} | Actor: ${actorId}: 14.1. Size override passed b:${batch.size} s:${sizeOverride}, bid: ${batchId}`)
       }
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 15. Size override passed`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 15. Size override passed`)
 
       const totalDefects = defects.reduce((sum, d) => sum + d.quantity, 0);
       if (batch.size != null && totalDefects > batch.size)
         throw new Error(`Total defects (${totalDefects}) exceed size (${batch.size}) for batch ${batchId}`,);
 
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 16. Defects built ${defects}`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 16. Defects built ${defects}`)
 
       let update: BatchInsert = { 
         status: { id: statusTransition.toStatus.id }
@@ -158,14 +159,14 @@ export class BatchService extends Service<Batch, BatchInsert, BatchLookup, Batch
           size: Math.max((batch.size || 0) - totalDefects, 0),
         }
       }
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 16. Update Built: ${JSON.stringify(update)}`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 16. Update Built: ${JSON.stringify(update)}`)
 
       const updated = await this.repository.patch(batch.id, update)
 
 
       batch.size = updated.size
       batch.status.id = updated.status.id
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 17. Updated batch: ${JSON.stringify(updated)}, CTX: ${JSON.stringify(batch)}`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 17. Updated batch: ${JSON.stringify(updated)}, CTX: ${JSON.stringify(batch)}`)
 
       const toInsert: BatchTransitionInsert  = {
         batch: { id: batch.id, size: batch.size || 0 },
@@ -175,46 +176,46 @@ export class BatchService extends Service<Batch, BatchInsert, BatchLookup, Batch
         device: { id: shift.device.id },
         coworkers: coworkers.map(c => ({ id: c }))
       }
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 18. Default to insert: ${JSON.stringify(toInsert)}`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 18. Default to insert: ${JSON.stringify(toInsert)}`)
 
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 19. Batch.Status.isPackaging: ${batch.status.isPackaging}, reminder: ${remainder}`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 19. Batch.Status.isPackaging: ${batch.status.isPackaging}, reminder: ${remainder}`)
       if (batch.status.isPackaging){
         const product = await this.productRepository.find({ id: batch.product.id });
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 19.1. Product: \n\n${JSON.stringify(product)}, \n\nreminder: ${remainder}`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 19.1. Product: \n\n${JSON.stringify(product)}, \n\nreminder: ${remainder}`)
         if (product && remainder !== null && remainder !== undefined) {
           if (remainder === 0) {
-            console.log(`Batch: ${batchId} | Actor: ${actorId}: 19.1.a. Completed: Product: \n\n${JSON.stringify(product)}, \n\nreminder: ${remainder}`)
+            logger.info(`Batch: ${batchId} | Actor: ${actorId}: 19.1.a. Completed: Product: \n\n${JSON.stringify(product)}, \n\nreminder: ${remainder}`)
             const completedID = 14
             const addSize = batch.size || 0
-            console.log(`Add Size ${addSize}, bs: ${batch.size}: quantity: ${product.quantity + addSize} product.quantity: ${product.quantity}`)
+            logger.info(`Add Size ${addSize}, bs: ${batch.size}: quantity: ${product.quantity + addSize} product.quantity: ${product.quantity}`)
             const updatedProduct = await this.productRepository.patch(batch.product.id, { quantity: product.quantity + addSize})
             await this.repository.patch(batch.id, { size: 0, status: { id: completedID }})
             toInsert.toStatus.id = completedID;
-            console.log("here 2")
-            console.log(`Batch: ${batchId} | Actor: ${actorId}: 19.2.a. Completed: Updated Product: \n\n${JSON.stringify(updatedProduct)},\nToInsert: ${JSON.stringify(toInsert)}`)
-            console.log("here 22")
+            logger.info("here 2")
+            logger.info(`Batch: ${batchId} | Actor: ${actorId}: 19.2.a. Completed: Updated Product: \n\n${JSON.stringify(updatedProduct)},\nToInsert: ${JSON.stringify(toInsert)}`)
+            logger.info("here 22")
           } else {
-            console.log(`Batch: ${batchId} | Actor: ${actorId}: 19.1.b. Labeling: Product: \n\n${JSON.stringify(product)}, \n\nreminder: ${remainder}`)
+            logger.info(`Batch: ${batchId} | Actor: ${actorId}: 19.1.b. Labeling: Product: \n\n${JSON.stringify(product)}, \n\nreminder: ${remainder}`)
             const labelingID = 12
             const addSize = batch.size || 0
             const updatedProduct = await this.productRepository.patch(batch.product.id, { quantity: product.quantity + addSize - remainder})
             await this.repository.patch(batch.id, { size: remainder, status: { id: labelingID }})
             toInsert.toStatus.id = labelingID;
             toInsert.batch.size -= remainder 
-            console.log(`Batch: ${batchId} | Actor: ${actorId}: 19.2.b. Labeling: \n\nUpdated Product: ${JSON.stringify(updatedProduct)},\nToInsert: ${JSON.stringify(toInsert)}`)
+            logger.info(`Batch: ${batchId} | Actor: ${actorId}: 19.2.b. Labeling: \n\nUpdated Product: ${JSON.stringify(updatedProduct)},\nToInsert: ${JSON.stringify(toInsert)}`)
           }
         }
       }
 
       const newBatchTransition = await this.batchTransitionsRepository.create(toInsert)
-      console.log(`Batch: ${batchId} | Actor: ${actorId}: 20. new batch transition created\nToInsert:${JSON.stringify(toInsert)}\n${JSON.stringify(newBatchTransition)}`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 20. new batch transition created\nToInsert:${JSON.stringify(toInsert)}\n${JSON.stringify(newBatchTransition)}`)
       if (defects.length > 0) {
         const defectsToInsert: DefectInsert[] = defects.map((defect) => {
           return { transition: { id: newBatchTransition.id }, defectType: { id: defect.defect_type_id }, quantity: defect.quantity}
         })
         this.defectRepository.createMany(defectsToInsert)
       }
-      console.log("advance success")
+      logger.info("advance success")
     });
   }
 }

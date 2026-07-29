@@ -39,7 +39,6 @@ export class UserRepository extends Repository<User, UserRow, UserLookup, UserIn
   }
 
   async syncDepartments(id: number, departmentIds: number[]): Promise<void> {
-    console.log(departmentIds, "crazy here")
     await query(`DELETE FROM user_departments WHERE user_id = $1`, [id]);
     if (departmentIds.length === 0) return;
     const values = departmentIds.map((_, i) => `($1, $${i + 2})`).join(", ");
