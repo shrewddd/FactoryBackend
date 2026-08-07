@@ -11,7 +11,7 @@ import { DeviceInsertSchema, DeviceSchema } from "features/devices/devices.schem
 import { PackedStockInsertSchema, PackedStockSchema } from "features/packedStock/packedStock.schema";
 import { ProductInsertSchema, ProductPatchSchema, ProductSchema } from "features/products/product.schema";
 import { QRCodeInsertSchema, QRCodeSchema } from "features/qrcodes/qrcode.schema";
-import { BatchAdvanceRequestSchema, BatchInsertSchema, BatchPatchSchema, BatchSchema } from "features/batches/batch.schema";
+import { BatchAdvanceRequestSchema, BatchInsertSchema, BatchMergeRequestSchema, BatchPatchSchema, BatchSchema } from "features/batches/batch.schema";
 import { DefectInsertSchema, DefectSchema } from "features/defects/defect.schema";
 import { StorageEntryInsertSchema, StorageEntrySchema } from "features/storageEntries/storageEntry.schema";
 import { QuantitiesByStatusSchema } from "schemas/productQuantities";
@@ -80,6 +80,21 @@ export function generateOpenApiDoc() {
               responses: {
                 "200": { description: "Batch advanced" },
                 "400": { description: "Validation or workflow error (missing size, role/department mismatch, defect overflow, etc.)" },
+                "404": { description: "Batch, user, or active shift not found" },
+              },
+            },
+          },
+          "/batches/{id}/merge": {
+            post: {
+              tags: ["Batch"],
+              operationId: "mergeBatch",
+              requestParams: { path: paramsSchema },
+              requestBody: {
+                content: { "application/json": { schema: BatchMergeRequestSchema } },
+              },
+              responses: {
+                "200": { description: "Batches merged" },
+                "400": { description: "Validation or workflow error" },
                 "404": { description: "Batch, user, or active shift not found" },
               },
             },

@@ -250,6 +250,13 @@ export const BatchFromRow = BatchRowSchema.transform((row): Batch => ({
   }))
 }));
 
+export const BatchMergeRequestSchema = z.object({
+  batchBId: DbId,
+  actorId: DbId,
+}).meta({ id: "BatchMergeRequest" });
+
+export type BatchMergeRequest = z.infer<typeof BatchMergeRequestSchema>;
+
 export const BatchAdvanceRequestSchema = z.object({
   actorId: DbId,
   coworkers: DbId.array().default([]),

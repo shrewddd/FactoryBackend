@@ -16,6 +16,7 @@ router.get("/:id", controller.find);
 router.put("/:id", controller.update);
 router.patch("/:id", controller.patch);
 router.delete("/:id", controller.delete);
+router.post("/:id/merge", controller.merge);
 router.post("/:id/advance", controller.advance);
 
 export default router;

@@ -1,6 +1,6 @@
 import express from "express";
 import { Controller } from "abstract/controller";
-import { BatchAdvanceRequestSchema, BatchInsertSchema, BatchPatchSchema, type Batch, type BatchInsert } from "./batch.schema";
+import { BatchAdvanceRequestSchema, BatchInsertSchema, BatchMergeRequestSchema, BatchPatchSchema, type Batch, type BatchInsert } from "./batch.schema";
 import { BatchService } from "./batch.service";
 import { asyncHandler } from "utils/errorHandler";
 import type { ZodType } from "zod";
@@ -13,6 +13,15 @@ export class BatchController extends Controller<Batch, BatchInsert, BatchService
   findManyWithAll = asyncHandler(async (_req: express.Request, res: express.Response) => {
     const result = await this.service.findManyWithAll();
     res.status(200).json(result);
+  });
+
+  merge = asyncHandler(async (req: express.Request, res: express.Response) => {
+    const batchAId = Number(req.params.id);
+    const { batchBId, actorId } = BatchMergeRequestSchema.parse(req.body);
+
+    await this.service.merge(batchAId, batchBId, actorId);
+
+    res.status(200).json({ success: true });
   });
 
   advance = asyncHandler(async (req: express.Request, res: express.Response) => {
