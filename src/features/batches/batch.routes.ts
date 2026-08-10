@@ -8,6 +8,7 @@ const controller = new BatchController();
 router.get("/", controller.findMany);
 router.post("/", controller.create);
 router.get("/expanded", controller.findManyWithAll);
+router.get("/active/:workerId", controller.findActiveByWorker);
 router.post("/bulk", controller.createMany);
 router.post("/bulk/update", controller.updateMany);
 router.post("/bulk/patch", controller.patchMany);

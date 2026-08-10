@@ -250,6 +250,10 @@ export const BatchFromRow = BatchRowSchema.transform((row): Batch => ({
   }))
 }));
 
+export const BatchActiveByWorkerParamsSchema = z.object({
+  workerId: z.coerce.number().int().positive(),
+});
+
 export const BatchMergeRequestSchema = z.object({
   batchBId: DbId,
   actorId: DbId,

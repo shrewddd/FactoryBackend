@@ -1,6 +1,6 @@
 import express from "express";
 import { Controller } from "abstract/controller";
-import { BatchAdvanceRequestSchema, BatchInsertSchema, BatchMergeRequestSchema, BatchPatchSchema, type Batch, type BatchInsert } from "./batch.schema";
+import { BatchActiveByWorkerParamsSchema, BatchAdvanceRequestSchema, BatchInsertSchema, BatchMergeRequestSchema, BatchPatchSchema, type Batch, type BatchInsert } from "./batch.schema";
 import { BatchService } from "./batch.service";
 import { asyncHandler } from "utils/errorHandler";
 import type { ZodType } from "zod";
@@ -12,6 +12,12 @@ export class BatchController extends Controller<Batch, BatchInsert, BatchService
 
   findManyWithAll = asyncHandler(async (_req: express.Request, res: express.Response) => {
     const result = await this.service.findManyWithAll();
+    res.status(200).json(result);
+  });
+
+  findActiveByWorker = asyncHandler(async (req: express.Request, res: express.Response) => {
+    const { workerId } = BatchActiveByWorkerParamsSchema.parse(req.params);
+    const result = await this.service.findActiveByWorker(workerId);
     res.status(200).json(result);
   });
 

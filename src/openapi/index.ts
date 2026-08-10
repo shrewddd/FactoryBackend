@@ -11,7 +11,7 @@ import { DeviceInsertSchema, DeviceSchema } from "features/devices/devices.schem
 import { PackedStockInsertSchema, PackedStockSchema } from "features/packedStock/packedStock.schema";
 import { ProductInsertSchema, ProductPatchSchema, ProductSchema } from "features/products/product.schema";
 import { QRCodeInsertSchema, QRCodeSchema } from "features/qrcodes/qrcode.schema";
-import { BatchAdvanceRequestSchema, BatchInsertSchema, BatchMergeRequestSchema, BatchPatchSchema, BatchSchema } from "features/batches/batch.schema";
+import { BatchActiveByWorkerParamsSchema, BatchAdvanceRequestSchema, BatchInsertSchema, BatchMergeRequestSchema, BatchPatchSchema, BatchSchema } from "features/batches/batch.schema";
 import { DefectInsertSchema, DefectSchema } from "features/defects/defect.schema";
 import { StorageEntryInsertSchema, StorageEntrySchema } from "features/storageEntries/storageEntry.schema";
 import { QuantitiesByStatusSchema } from "schemas/productQuantities";
@@ -66,6 +66,24 @@ export function generateOpenApiDoc() {
                     },
                   },
                 },
+              },
+            },
+          },
+          "/batches/active/{workerId}": {
+            get: {
+              tags: ["Batch"],
+              operationId: "getActiveBatchesByWorker",
+              requestParams: { path: BatchActiveByWorkerParamsSchema },
+              responses: {
+                "200": {
+                  description: "Active batches for the worker; empty array if none",
+                  content: {
+                    "application/json": {
+                      schema: BatchSchema.array(),
+                    },
+                  },
+                },
+                "400": { description: "Worker ID must be a positive integer" },
               },
             },
           },
