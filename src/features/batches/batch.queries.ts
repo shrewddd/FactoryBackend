@@ -117,7 +117,7 @@ ORDER BY b.id DESC;
 `;
 
 export const FIND_ACTIVE_BY_WORKER_QUERY = `
-SELECT b.*
+SELECT b.*, bs.is_packaging AS status_is_packaging
 FROM batches b
 JOIN batch_statuses bs ON bs.id = b.status_id
 JOIN LATERAL (

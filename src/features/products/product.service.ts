@@ -39,7 +39,7 @@ export class ProductService extends Service<Product, ProductInsert, ProductLooku
 
     const product = await this.repository.find({ id })
     if (!product)  throw Error(`Product: ${id} not found`)
-    if (product.quantity < (boxSize * quantity))  throw Error(`Moved amount is greater then packed stock`)
+    if (product.quantity < (boxSize * quantity))  throw Error(`Moved amount is greater than packed stock`)
 
     return transaction(async (client) => {
       this.repository.patch(id, { quantity: product.quantity - (quantity * boxSize) })

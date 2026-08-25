@@ -51,6 +51,51 @@ export class BatchService extends Service<Batch, BatchInsert, BatchLookup, Batch
     return result;
   }
 
+  async findActiveByWorker(workerId: number): Promise<Batch[]> {
+    return this.repository.findActiveByWorker(workerId);
+  }
+
+  async merge(batchAId: number, batchBId: number, actorId: number) {
+    return transaction(async () => {
+
+      if (batchAId === batchBId)
+        throw new Error(`BatchA must not be equal to BatchB`);
+
+      const batchA = await this.repository.find({ id: batchAId });
+      const batchB = await this.repository.find({ id: batchBId });
+
+      if (!batchA) throw new Error(`Batch ${batchAId} not found`);
+      if (!batchB) throw new Error(`Batch ${batchBId} not found`);
+
+      if (batchA.status.id !== 13) throw new Error(`Batch ${batchAId} is not in packaging`);
+      if (batchB.status.id !== 13) throw new Error(`Batch ${batchBId} is not in packaging`);
+
+      const actor = await this.userRepository.find({ id: actorId });
+      if (!actor) throw new Error(`User ${actorId} not found`);
+
+      const shift = await this.shiftRepository.findActiveByWorkerId(actor.id)
+      if (!shift) throw new Error(`User ${actorId} does not have active shift`);
+      if (!shift.device) throw new Error(`User ${actorId} does not have active device`);
+      if (!shift.device.department) throw new Error(`No enough shift data, missing department`)
+      if (shift.device.department.id !== 6) throw new Error(`Device ${shift.device.id} can not work in department ${6}`);
+
+      const actorBatchesInProgress = await this.repository.findActiveByWorker(actorId);
+
+      if (!actorBatchesInProgress.some((batch) => batch.id === batchAId)) 
+        throw new Error(`User ${actorId} is not working on batch ${batchAId}`);
+      if (!actorBatchesInProgress.some((batch) => batch.id === batchBId))
+        throw new Error(`User ${actorId} is not working on batch ${batchBId}`);
+
+      if (batchA.product.id !== batchB.product.id) throw new Error(`Batch products differ`);
+
+      if (!batchA.size || !batchB.size) throw new Error(`Batch size error`);
+
+      batchA.size += batchB.size;
+      await this.repository.patch(batchB.id, { size: 0, status: { id: 14 }})
+      await this.repository.patch(batchA.id, { size: batchA.size })
+    })
+  }
+
   async advance(
     batchId: number, 
     actorId: number, 
@@ -104,7 +149,7 @@ export class BatchService extends Service<Batch, BatchInsert, BatchLookup, Batch
 
       statusTransition.fromStatus = from;
       statusTransition.toStatus = to;
-      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 10. From/To set`)
+      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 10. From/To set ${JSON.stringify(from)}, ${JSON.stringify(to)} here`)
 
       if (statusTransition.required) {
         logger.info(`Batch: ${batchId} | Actor: ${actorId}: 11. Requirements found`)
@@ -125,13 +170,23 @@ export class BatchService extends Service<Batch, BatchInsert, BatchLookup, Batch
       logger.info(`Batch: ${batchId} | Actor: ${actorId}: 12. Requirements group is over`)
 
       const actorBatchesInProgress = await this.repository.findActiveByWorker(actorId);
+      const batchProductSums = actorBatchesInProgress.reduce<Record<number, number>>((productSums, activeBatch) => {
+        const productId = activeBatch.product.id;
+        if (productId != null) {
+          productSums[productId] = (productSums[productId] ?? 0) + (activeBatch.size ?? 0);
+        }
+
+        return productSums;
+      }, {});
+
+      logger.info(`Batches in progress: ${actorBatchesInProgress} | Actor: ${actorId}`)
+      logger.info(`Batch product sums: ${JSON.stringify(batchProductSums)} | Actor: ${actorId}`);
       const packStatus = [12, 13, 14] 
       const limit = packStatus.includes(batch.status.id) ?  PACKING_BATCHES_LIMIT : IN_PROGRESS_BATCHES_LIMIT
       logger.info(`${!batch.status.isInProgress}, ${actorBatchesInProgress.length}, ${limit}, ${actorBatchesInProgress.length >= limit}, ${!actor.role.canOverrideWorkflow}`)
       if (!batch.status.isInProgress && actorBatchesInProgress.length >= limit && !actor.role.canOverrideWorkflow)
           throw new Error(`User ${actorId} is already working: ${actorBatchesInProgress.map(item => item.id)}`);
       logger.info(`Batch: ${batchId} | Actor: ${actorId}: 13. Active Batches check passed`)
-
 
       logger.info(`Batch: ${batchId} | Actor: ${actorId}: 14. Size override started`)
       if (statusTransition.fromStatus.requiresSizeInput) {
@@ -163,7 +218,6 @@ export class BatchService extends Service<Batch, BatchInsert, BatchLookup, Batch
 
       const updated = await this.repository.patch(batch.id, update)
 
-
       batch.size = updated.size
       batch.status.id = updated.status.id
       logger.info(`Batch: ${batchId} | Actor: ${actorId}: 17. Updated batch: ${JSON.stringify(updated)}, CTX: ${JSON.stringify(batch)}`)
@@ -179,11 +233,14 @@ export class BatchService extends Service<Batch, BatchInsert, BatchLookup, Batch
       logger.info(`Batch: ${batchId} | Actor: ${actorId}: 18. Default to insert: ${JSON.stringify(toInsert)}`)
 
       logger.info(`Batch: ${batchId} | Actor: ${actorId}: 19. Batch.Status.isPackaging: ${batch.status.isPackaging}, reminder: ${remainder}`)
-      if (batch.status.isPackaging){
+      if (batch.status.isPackaging) {
         const product = await this.productRepository.find({ id: batch.product.id });
-      logger.info(`Batch: ${batchId} | Actor: ${actorId}: 19.1. Product: \n\n${JSON.stringify(product)}, \n\nreminder: ${remainder}`)
-        if (product && remainder !== null && remainder !== undefined) {
+        logger.info(`Batch: ${batchId} | Actor: ${actorId}: 19.1. Product: \n\n${JSON.stringify(product)}, \n\nreminder: ${remainder}`)
+        if (product && remainder !== null && remainder !== undefined) { // this only happens in batch_status id = 13
           if (remainder === 0) {
+            if((batch.size ?? 0) % product.boxSize !== 0){
+              throw new Error(`Product sums is not correct %`);
+            }
             logger.info(`Batch: ${batchId} | Actor: ${actorId}: 19.1.a. Completed: Product: \n\n${JSON.stringify(product)}, \n\nreminder: ${remainder}`)
             const completedID = 14
             const addSize = batch.size || 0
@@ -196,6 +253,10 @@ export class BatchService extends Service<Batch, BatchInsert, BatchLookup, Batch
             logger.info("here 22")
           } else {
             logger.info(`Batch: ${batchId} | Actor: ${actorId}: 19.1.b. Labeling: Product: \n\n${JSON.stringify(product)}, \n\nreminder: ${remainder}`)
+            logger.info(`${batch.size}, ${product.boxSize}, ${remainder}, ${((batch.size ?? 0) % product.boxSize !== remainder)}`)
+            if((batch.size ?? 0) % product.boxSize !== remainder){
+              throw new Error(`Product sums is not correct %`);
+            }
             const labelingID = 12
             const addSize = batch.size || 0
             const updatedProduct = await this.productRepository.patch(batch.product.id, { quantity: product.quantity + addSize - remainder})
